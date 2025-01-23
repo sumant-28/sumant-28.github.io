@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<title>Apple Health Data Lake in AWS – Odds and Ends | Making the Ordinary Extraordinary With Data Together</title>
+<meta charset="utf-8">
+<meta name="generator" content="Hugo 0.136.5">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="https://sumant-28.github.io/css/index.css">
+<link rel="canonical" href="https://sumant-28.github.io/posts/datalakept2/">
+<link rel="alternate" type="application/rss+xml" href="" title="Making the Ordinary Extraordinary With Data Together">
+
+<header>
+  
+    <a href="https://sumant-28.github.io/" class="title">Making the Ordinary Extraordinary With Data Together</a>
+  
+  
+</header>
+
+<article>
+  <header>
+    <h1>Apple Health Data Lake in AWS – Odds and Ends</h1>
+    <time datetime="2025-01-20T14:29:11&#43;13:00">January 20, 2025</time>
+  </header>
+  <p>In my previous blog post I described the process of using my Apple Health (AH) records collected over the course of many years and migrating it to a data lake. I omitted some details which I will address here. I may write another post later if I deem it worthwhile.</p>
+<h1 id="data-completeness">Data completeness</h1>
+<p>The earlier post only dealt with architecture and daily incremental ingest. However by itself it is almost useless to me as an end user. The real power of analytics comes with combining the most recent data with records collected years ago to make meaningful comparisons.</p>
+<p>People with project ideas like this do not usually think to do it immediately after they start recording data with the device. They typically have years worth of data. In my case data goes back to 2020 and meaningful daily health metrics to late 2021. The introduction of the Apple Watch Ultra was a game changer personally because on many occasions I noticed that I was constrained by the battery life in terms of how long I could continue wearing the watch the longer into the day I was and what activities I could record. Certain activities like gran fondos and all day hikes were also out of reach.</p>
+<p>There is hence a need for some type of backfill. Getting old data into this data lake sounds trivial and is easy to conceptually imagine but requires a deceptively large amount of decision making and value judgment. Some of those decisions will be gone over in more detail later on in the post.</p>
+<h1 id="hae-issues">HAE issues</h1>
+<p>This process and journey proved to be a lot more difficult than I would have hoped because unfortunately the data from the Health Auto Export app (HAE) is not suitable to get historical backfills into my data lake.</p>
+<style>
+    .center {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    figure figcaption {
+        text-align: center;
+    }
+</style>
+
+<figure>
+    <img src="/images/HAE1.jpeg" alt="Alt text" class="center">
+    <figcaption>Manual export options</figcaption>
+</figure>
+<p>The option is there to get data at the precision level of seconds which is the same level of granularity with which it is held raw in AH. However when I downloaded the data and had a look I saw that it cannot be used at all for my intended purpose.</p>
+<p>To illustrate why I have a bar chart of a day of potential backfill data. This is not a histogram but instead thousands of observations of the same quantity but with otherwise normal looking date columns and data field name variety.</p>
+<style>
+    .center {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    figure figcaption {
+        text-align: center;
+    }
+</style>
+
+<figure>
+    <img src="/images/HAE2.png" alt="Alt text" class="center">
+    <figcaption>I cannot backfill my data lake when the data coming from HAE looks like this</figcaption>
+</figure>
+<p>In my own testing I found that this mistake corrects itself when you choose the day level of precision from HAE. For example in the case of a daily observation like resting heart rate it makes no difference if you download data from AH or HAE.</p>
+<h1 id="time-granularity">Time granularity</h1>
+<p>AH collects series of over 100 metrics and puts it in a convenient central place. For many data series like body mass having only the date of the observation is enough to draw meaningful analytics. This also applies for what I consider to be the majority of other metrics stored by AH. It is also the case that collecting timestamp data vastly increases cloud costs in terms of data storage and glue processing. However it is possible for me to think of instances where the hour, the minute and even the second of the observation matters. One instance is if I am doing a HIIT workout where heart rate rapidly rises and falls and by the minute will not be granular enough because some HIIT workouts are over in five minutes or so. With vast amounts of timestamp information I can also answer questions like &ldquo;am I more likely to stand up as the coming hour approaches for a break?&rdquo;. Part of the aim of this project is I want to challenge myself to manage data infrastructure with close to ten million observations so I am not put off by the fact that timestamp information processing makes this harder than it otherwise needs to be.</p>
+<p>Another motivation I had was it allowed me to make use of the <a href="https://github.com/sumant-28/AppleHealthParser.jl">Julia package</a> I wrote earlier to process this type of large xml file and not feel like I wasted my time.</p>
+<h1 id="ahhae-merging">AH/HAE merging</h1>
+<p>One benefit of the fact that daily observations are equivalent between AH and HAE is that it allows me to settle something that vexed me when all I had was AH data. When there are multiple observations on the same day it can be tricky to tell if they are meant to be added together cumulatively to get an overall metric for the day or whether they are independent snapshots. In some instances it is clear. For example you do not add two resting heart rates together to get a resting heart rate for the day but for many of the arcane metrics it is not clear at all until I undertook this analysis.</p>
+<p>Knowing what I am dealing with now becomes crucial later on when it comes to making dashboards using QuickSight. Most of my charts are time series with dates on the x axis. If the data is snapshot I need to ensure when formatting the data on the visual to choose the mean or average rather than the sum in order to draw the correct insights.</p>
+<p>Reconciling the two data sources so they are seamless in the data lake requires some thinking and preparation. Because the data coming in from the API is automatic I have to mould my AH data to be like my HAE data before I upload it to my data lake.</p>
+<p>The structure from HAE felt like a breakthrough in my understanding because I was having difficulty trying to manage eight or more fields for each observation much of them containing fields that are not relevant at all for end user analytics. After seeing what HAE includes it felt obvious what four fields really matter. Here is an example of an element in the AH XML file.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-javascript" data-lang="javascript"><span style="display:flex;"><span><span style="color:#f92672">&lt;</span><span style="color:#a6e22e">Record</span> <span style="color:#a6e22e">type</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;HKQuantityTypeIdentifierDietaryWater&#34;</span> <span style="color:#a6e22e">sourceName</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;Cronometer&#34;</span> <span style="color:#a6e22e">sourceVersion</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;2009&#34;</span> <span style="color:#a6e22e">device</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;&amp;lt;&amp;lt;HKDevice: 0x303e2f520&amp;gt;, name:iPhone, manufacturer:Apple, model:iPhone, software:17.5.1, UDIDeviceIdentifier:3BA9429E-E475-4D8D-9AD0-6A5D221C9D2F&amp;gt;&#34;</span> <span style="color:#a6e22e">unit</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;mL&#34;</span> <span style="color:#a6e22e">creationDate</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;2024-08-09 13:49:55 +1200&#34;</span> <span style="color:#a6e22e">startDate</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;2024-08-07 12:58:00 +1200&#34;</span> <span style="color:#a6e22e">endDate</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;2024-08-07 12:58:00 +1200&#34;</span> <span style="color:#a6e22e">value</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;371.117&#34;</span><span style="color:#f92672">/&gt;</span>
+</span></span></code></pre></div><p>The tag gets converted to the name field after being simplified. The unit and value fields remain unchanged. There are three timestamp fields to pick from.</p>
+<p>That means the only thing left is exhaustively going through every single metric in HAE and AH using Table 1 to ensure they reconcile.</p>
+<h1 id="backfill-strategy">Backfill strategy</h1>
+<p>A helpful list is provided by the developer of HAE <a href="https://www.healthyapps.dev/supported-data">here</a>. There is a large amount to choose from and it is exhausting to have to go through them one by one. Some I have not included in Table 1 because they do not apply to my circumstances. Some others may apply to my circumstances in the future but not now. Anything that requires manual user input to AH I am omitting. This is meant to be automation of sensor data from my IOT devices.</p>
+<p>From a data quality perspective having lots of snapshot metrics makes life a lot easier because if there are multiple observations a day only one needs to be sent via the REST API for the data in the data lake to be accurate. However in my experience I have noticed that some of the metrics that rely on aggregation can be quite far off between AH and HAE and therefore are not carried through. If the data is within the ballpark of each other that indicates that the data can be seen as referring to the same metrics but it becomes useless to draw trends because you do not know if it is caused by the data generating process or something external.</p>
+<p>Table 1 was constructed from me getting a days worth of data from HAE for each row representing a metric. That is compared against the data from filtering what I download in AH for that specific day. It is possible for me to accept later on a metric if further checks reveal that they line up more often than they diverge. However this is unlikely. It is important for me to draw insights and if there is too much inherent divergence between the two sources that no longer becomes possible.</p>
+<p>Many of these metrics I may never look at which is annoying to think about because it takes a lot of work to go to the effort to classify it. However like I said earlier that might change and a goal of this project is managing close to ten million individual observations so I am making a design decision to err on the side of being more inclusive.</p>
+
+
+
+
+
+
+  
+    
+  
+
+
+  
+
+
+
+
+<div class="data-table" role="region" tabindex="0" aria-labelledby="table-caption-optional- declaration-a-unique-one-will-be-generated">
+  <table class="table optional CSS class declaration" id="optional- declaration-a-unique-one-will-be-generated" itemscope itemtype="https://schema.org/Table"><caption id="table-caption-optional- declaration-a-unique-one-will-be-generated" itemprop="about"><b>Table.</b> Table 1: Data Mapping</caption>
+  <thead>
+      <tr>
+          <th style="text-align: center">HAE field</th>
+          <th style="text-align: center">AH XML file tag</th>
+          <th style="text-align: center">Snapshot/Aggregate/Daily</th>
+          <th>Accept/Discard</th>
+          <th>Comments</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td style="text-align: center">active_energy</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierActiveEnergyBurned</td>
+          <td style="text-align: center">Aggregate</td>
+          <td>✘</td>
+          <td>The discrepancy is too high between the two numbers.</td>
+      </tr>
+      <tr>
+          <td style="text-align: center">apple_exercise_time</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierAppleExerciseTime</td>
+          <td style="text-align: center">Aggregate</td>
+          <td>✔</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td style="text-align: center">apple_stand_hour</td>
+          <td style="text-align: center">HKCategoryTypeIdentifierAppleStandHour</td>
+          <td style="text-align: center">✘</td>
+          <td>✘</td>
+          <td>Takes a string value of either HKCategoryValueAppleStandHourStood or HKCategoryValueAppleStandHourIdle in the XML file which is not a suitable data type although it can be converted to an integer the data then needs to be decoded</td>
+      </tr>
+      <tr>
+          <td style="text-align: center">apple_stand_time</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierAppleStandTime</td>
+          <td style="text-align: center">Aggregate</td>
+          <td>✔</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td style="text-align: center">basal_energy_burned</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierBasalEnergyBurned</td>
+          <td style="text-align: center">Aggregate</td>
+          <td>✘</td>
+          <td>The discrepancy is too high between the two numbers</td>
+      </tr>
+      <tr>
+          <td style="text-align: center">cycling_distance</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierDistanceCycling</td>
+          <td style="text-align: center">Aggregate</td>
+          <td>✘</td>
+          <td>The number taken directly from Apple is unreliable so there is no point checking if it reconciles with the exporter app</td>
+      </tr>
+      <tr>
+          <td style="text-align: center">flights_climbed</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierFlightsClimbed</td>
+          <td style="text-align: center">Aggregate</td>
+          <td>✔</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td style="text-align: center">physical_effort</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierPhysicalEffort</td>
+          <td style="text-align: center">Snapshot</td>
+          <td>✔</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td style="text-align: center">running_power</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierRunningPower</td>
+          <td style="text-align: center">Snapshot</td>
+          <td>✔</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td style="text-align: center">running_speed</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierRunningSpeed</td>
+          <td style="text-align: center">Snapshot</td>
+          <td>✔</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td style="text-align: center">step_count</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierStepCount</td>
+          <td style="text-align: center">Aggregate</td>
+          <td>✘</td>
+          <td>The discrepancy is too high between the two numbers</td>
+      </tr>
+      <tr>
+          <td style="text-align: center">vo2_max</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierVO2Max</td>
+          <td style="text-align: center">Snapshot</td>
+          <td>✔</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td style="text-align: center">walking_running_distance</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierDistanceWalkingRunning</td>
+          <td style="text-align: center">Aggregate</td>
+          <td>✘</td>
+          <td>The discrepancy is too high between the two numbers.</td>
+      </tr>
+      <tr>
+          <td style="text-align: center">environmental_audio_exposure</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierEnvironmentalAudioExposure</td>
+          <td style="text-align: center">Snapshot</td>
+          <td>✔</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td style="text-align: center">headphone_audio_exposure</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierHeadphoneAudioExposure</td>
+          <td style="text-align: center">Snapshot</td>
+          <td>✔</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td style="text-align: center">cardio_recovery</td>
+          <td style="text-align: center">✘</td>
+          <td style="text-align: center">✘</td>
+          <td>✘</td>
+          <td>There are many similarly named metrics in Apple Health but none map obviously to this</td>
+      </tr>
+      <tr>
+          <td style="text-align: center">heart_rate</td>
+          <td style="text-align: center">✘</td>
+          <td style="text-align: center">✘</td>
+          <td>✘</td>
+          <td>This does not match a record tag in Apple Health but there is heart rate metadata attached to the heart rate variability record whenever it is recorded</td>
+      </tr>
+      <tr>
+          <td style="text-align: center">heart_rate_variability</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierHeartRateVariabilitySDNN</td>
+          <td style="text-align: center">Snapshot</td>
+          <td>✔</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td style="text-align: center">resting_heart_rate</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierRestingHeartRate</td>
+          <td style="text-align: center">Snapshot</td>
+          <td>✔</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td style="text-align: center">walking_heart_rate_average</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierWalkingHeartRateAverage</td>
+          <td style="text-align: center">Daily</td>
+          <td>✔</td>
+          <td>This is a metric that almost always is collected once per day. On the rare day when multiple are collected the app prefers the earlier observation in the day</td>
+      </tr>
+      <tr>
+          <td style="text-align: center">running_ground_contact_time</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierRunningGroundContactTime</td>
+          <td style="text-align: center">Snapshot</td>
+          <td>✔</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td style="text-align: center">running_stride_length</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierRunningStrideLength</td>
+          <td style="text-align: center">Snapshot</td>
+          <td>✔</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td style="text-align: center">running_vertical_oscillation</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierRunningVerticalOscillation</td>
+          <td style="text-align: center">Snapshot</td>
+          <td>✔</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td style="text-align: center">six_minute_walking_test_distance</td>
+          <td style="text-align: center">✘</td>
+          <td style="text-align: center">✘</td>
+          <td>✘</td>
+          <td>This data appears to be only of use internally as a check because it does not have anything valuable for the end user</td>
+      </tr>
+      <tr>
+          <td style="text-align: center">stair_speed_up</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierStairAscentSpeed</td>
+          <td style="text-align: center">Snapshot</td>
+          <td>✔</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td style="text-align: center">stair_speed_down</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierStairDescentSpeed</td>
+          <td style="text-align: center">Snapshot</td>
+          <td>✔</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td style="text-align: center">walking_speed</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierWalkingSpeed</td>
+          <td style="text-align: center">Snapshot</td>
+          <td>✔</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td style="text-align: center">walking_step_length</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierWalkingStepLength</td>
+          <td style="text-align: center">Snapshot</td>
+          <td>✔</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td style="text-align: center">walking_asymmetry_percentage</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierWalkingAsymmetryPercentage</td>
+          <td style="text-align: center">Snapshot</td>
+          <td>✔</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td style="text-align: center">walking_double_support_percentage</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierWalkingDoubleSupportPercentage</td>
+          <td style="text-align: center">Aggregate</td>
+          <td>✔</td>
+          <td>The numbers reconcile between the two sources however it is expressed as a decimal in Apple Health and a whole number of percentage from exporter app</td>
+      </tr>
+      <tr>
+          <td style="text-align: center">blood_oxygen_saturation</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierOxygenSaturation</td>
+          <td style="text-align: center">Snapshot</td>
+          <td>✔</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td style="text-align: center">body_mass</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierBodyMass</td>
+          <td style="text-align: center">✘</td>
+          <td>✘</td>
+          <td>Despite existing in Apple Health records it does not export from exporter app records</td>
+      </tr>
+      <tr>
+          <td style="text-align: center">body_mass_index</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierBodyMassIndex</td>
+          <td style="text-align: center">Snapshot</td>
+          <td>✔</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td style="text-align: center">lean_body_mass</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierLeanBodyMass</td>
+          <td style="text-align: center">Snapshot</td>
+          <td>✔</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td style="text-align: center">carbohydrates</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierDietaryCarbohydrates</td>
+          <td style="text-align: center">Aggregate</td>
+          <td>✔</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td style="text-align: center">dietary_energy</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierDietaryEnergyConsumed</td>
+          <td style="text-align: center">Aggregate</td>
+          <td>✔</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td style="text-align: center">dietary_sugar</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierDietarySugar</td>
+          <td style="text-align: center">Aggregate</td>
+          <td>✔</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td style="text-align: center">dietary_water</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierDietaryWater</td>
+          <td style="text-align: center">Aggregate</td>
+          <td>✔</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td style="text-align: center">dietary_biotin</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierDietaryBiotin</td>
+          <td style="text-align: center">✘</td>
+          <td>✘</td>
+          <td>I am unable to find this metric in HAE but it is available in AH</td>
+      </tr>
+      <tr>
+          <td style="text-align: center">dietary_caffeine</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierDietaryCaffeine</td>
+          <td style="text-align: center">Aggregate</td>
+          <td>✔</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td style="text-align: center">calcium</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierDietaryCalcium</td>
+          <td style="text-align: center">Aggregate</td>
+          <td>✔</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td style="text-align: center">chromium</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierDietaryChromium</td>
+          <td style="text-align: center">Aggregate</td>
+          <td>✔</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td style="text-align: center">copper</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierDietaryCopper</td>
+          <td style="text-align: center">Aggregate</td>
+          <td>✔</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td style="text-align: center">fiber</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierDietaryFiber</td>
+          <td style="text-align: center">Aggregate</td>
+          <td>✔</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td style="text-align: center">folate</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierDietaryFolate</td>
+          <td style="text-align: center">Aggregate</td>
+          <td>✔</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td style="text-align: center">iodine</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierDietaryIodine</td>
+          <td style="text-align: center">Aggregate</td>
+          <td>✔</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td style="text-align: center">iron</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierDietaryIron</td>
+          <td style="text-align: center">Aggregate</td>
+          <td>✔</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td style="text-align: center">magnesium</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierDietaryMagnesium</td>
+          <td style="text-align: center">Aggregate</td>
+          <td>✔</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td style="text-align: center">manganese</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierDietaryManganese</td>
+          <td style="text-align: center">Aggregate</td>
+          <td>✔</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td style="text-align: center">molybdenum</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierDietaryMolybdenum</td>
+          <td style="text-align: center">Aggregate</td>
+          <td>✔</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td style="text-align: center">monounsaturated_fat</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierDietaryFatMonounsaturated</td>
+          <td style="text-align: center">Aggregate</td>
+          <td>✔</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td style="text-align: center">niacin</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierDietaryNiacin</td>
+          <td style="text-align: center">Aggregate</td>
+          <td>✔</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td style="text-align: center">pantothenic_acid</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierDietaryPantothenicAcid</td>
+          <td style="text-align: center">Aggregate</td>
+          <td>✔</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td style="text-align: center">polyunsaturated_fat</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierDietaryFatPolyunsaturated</td>
+          <td style="text-align: center">Aggregate</td>
+          <td>✔</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td style="text-align: center">potassium</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierDietaryPotassium</td>
+          <td style="text-align: center">Aggregate</td>
+          <td>✔</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td style="text-align: center">protein</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierDietaryProtein</td>
+          <td style="text-align: center">Aggregate</td>
+          <td>✔</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td style="text-align: center">riboflavin</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierDietaryRiboflavin</td>
+          <td style="text-align: center">Aggregate</td>
+          <td>✔</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td style="text-align: center">saturated_fat</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierDietaryFatSaturated</td>
+          <td style="text-align: center">Aggregate</td>
+          <td>✔</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td style="text-align: center">selenium</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierDietarySelenium</td>
+          <td style="text-align: center">Aggregate</td>
+          <td>✔</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td style="text-align: center">sodium</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierDietarySodium</td>
+          <td style="text-align: center">Aggregate</td>
+          <td>✔</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td style="text-align: center">thiamin</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierDietaryThiamin</td>
+          <td style="text-align: center">Aggregate</td>
+          <td>✔</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td style="text-align: center">total_fat</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierDietaryFatTotal</td>
+          <td style="text-align: center">Aggregate</td>
+          <td>✔</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td style="text-align: center">vitamin_a</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierDietaryVitaminA</td>
+          <td style="text-align: center">Aggregate</td>
+          <td>✔</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td style="text-align: center">vitamin_b6</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierDietaryVitaminB6</td>
+          <td style="text-align: center">Aggregate</td>
+          <td>✔</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td style="text-align: center">vitamin_b12</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierDietaryVitaminB12</td>
+          <td style="text-align: center">Aggregate</td>
+          <td>✔</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td style="text-align: center">vitamin_c</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierDietaryVitaminC</td>
+          <td style="text-align: center">Aggregate</td>
+          <td>✔</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td style="text-align: center">vitamin_d</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierDietaryVitaminD</td>
+          <td style="text-align: center">Aggregate</td>
+          <td>✔</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td style="text-align: center">vitamin_e</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierDietaryVitaminE</td>
+          <td style="text-align: center">Aggregate</td>
+          <td>✔</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td style="text-align: center">vitamin_k</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierDietaryVitaminK</td>
+          <td style="text-align: center">Aggregate</td>
+          <td>✔</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td style="text-align: center">zinc</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierDietaryZinc</td>
+          <td style="text-align: center">Aggregate</td>
+          <td>✔</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td style="text-align: center">sleep_analysis</td>
+          <td style="text-align: center">HKCategoryTypeIdentifierSleepAnalysis</td>
+          <td style="text-align: center">✘</td>
+          <td>✘</td>
+          <td>In Apple Health records the value field which I am strictly typing as floating point integers is typed as a string so I cannot use this data</td>
+      </tr>
+      <tr>
+          <td style="text-align: center">time_in_daylight</td>
+          <td style="text-align: center">HKQuantityTypeIdentifierTimeInDaylight</td>
+          <td style="text-align: center">Aggregate</td>
+          <td>✔</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td style="text-align: center">toothbrushing</td>
+          <td style="text-align: center">HKCategoryTypeIdentifierToothbrushingEvent</td>
+          <td style="text-align: center">✘</td>
+          <td>✘</td>
+          <td>Takes a string value of HKCategoryValueNotApplicable although perhaps the timestamps along might be of some interest</td>
+      </tr>
+  </tbody>
+</table>
+
+</div>
+
+
+<h1 id="etl-transformation">ETL transformation</h1>
+<p>Something else I neglected in my earlier post is that it is not enough to get JSON data into the data lake. It needs to be transformed into parquet file format. What I failed to understand is that it is not just that parquet is more efficient when it comes to running SQL queries in Athena but that the Glue crawler does not automatically know the date field is a timestamp and instead classifies it to be string values in the semi-structured JSON file. It also classifies quantitative data that only consists of digits as also potentially being string values meaning that you need to resolve the choice between the two in the ETL transformation. The latter task cannot be done as part of a visual glue job hence the need to write code in PySpark which I am including as a snippet. It is helpful for dashboarding purposes to convert the timestamp into both a timestamp field in the transformed data as well as date. Date types make more sense for charts that involve time series comprising multiple years.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> sys
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> awsglue.transforms <span style="color:#f92672">import</span> <span style="color:#f92672">*</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> awsglue.utils <span style="color:#f92672">import</span> getResolvedOptions
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> PySpark.context <span style="color:#f92672">import</span> SparkContext
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> awsglue.context <span style="color:#f92672">import</span> GlueContext
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> awsglue.job <span style="color:#f92672">import</span> Job
+</span></span><span style="display:flex;"><span>  
+</span></span><span style="display:flex;"><span>sc <span style="color:#f92672">=</span> SparkContext<span style="color:#f92672">.</span>getOrCreate()
+</span></span><span style="display:flex;"><span>glueContext <span style="color:#f92672">=</span> GlueContext(sc)
+</span></span><span style="display:flex;"><span>spark <span style="color:#f92672">=</span> glueContext<span style="color:#f92672">.</span>spark_session
+</span></span><span style="display:flex;"><span>job <span style="color:#f92672">=</span> Job(glueContext)
+</span></span><span style="display:flex;"><span>raw_dyf1 <span style="color:#f92672">=</span> glueContext<span style="color:#f92672">.</span>create_dynamic_frame<span style="color:#f92672">.</span>from_catalog(
+</span></span><span style="display:flex;"><span>    database <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;database&#34;</span>, 
+</span></span><span style="display:flex;"><span>    table_name <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;table&#34;</span>)
+</span></span><span style="display:flex;"><span>raw_dyf1<span style="color:#f92672">.</span>printSchema()
+</span></span><span style="display:flex;"><span>df1 <span style="color:#f92672">=</span> raw_dyf1<span style="color:#f92672">.</span>resolveChoice(specs <span style="color:#f92672">=</span> [(<span style="color:#e6db74">&#34;qty&#34;</span>,<span style="color:#e6db74">&#34;cast:double&#34;</span>),
+</span></span><span style="display:flex;"><span>                                     (<span style="color:#e6db74">&#34;Max&#34;</span>, <span style="color:#e6db74">&#34;cast:double&#34;</span>),
+</span></span><span style="display:flex;"><span>                                     (<span style="color:#e6db74">&#34;Min&#34;</span>, <span style="color:#e6db74">&#34;cast:double&#34;</span>),
+</span></span><span style="display:flex;"><span>                                     (<span style="color:#e6db74">&#34;Avg&#34;</span>, <span style="color:#e6db74">&#34;cast:double&#34;</span>)])
+</span></span><span style="display:flex;"><span>df1<span style="color:#f92672">.</span>printSchema()
+</span></span><span style="display:flex;"><span>m2 <span style="color:#f92672">=</span> [(<span style="color:#e6db74">&#34;date&#34;</span>, <span style="color:#e6db74">&#34;string&#34;</span>, <span style="color:#e6db74">&#34;dt&#34;</span>, <span style="color:#e6db74">&#34;date&#34;</span>),
+</span></span><span style="display:flex;"><span>      (<span style="color:#e6db74">&#34;date&#34;</span>, <span style="color:#e6db74">&#34;string&#34;</span>, <span style="color:#e6db74">&#34;date&#34;</span>, <span style="color:#e6db74">&#34;timestamp&#34;</span>),
+</span></span><span style="display:flex;"><span>      (<span style="color:#e6db74">&#34;qty&#34;</span>, <span style="color:#e6db74">&#34;double&#34;</span>, <span style="color:#e6db74">&#34;qty&#34;</span>, <span style="color:#e6db74">&#34;double&#34;</span>),
+</span></span><span style="display:flex;"><span>      (<span style="color:#e6db74">&#34;name&#34;</span>, <span style="color:#e6db74">&#34;string&#34;</span>, <span style="color:#e6db74">&#34;name&#34;</span>, <span style="color:#e6db74">&#34;string&#34;</span>),
+</span></span><span style="display:flex;"><span>      (<span style="color:#e6db74">&#34;units&#34;</span>, <span style="color:#e6db74">&#34;string&#34;</span>, <span style="color:#e6db74">&#34;units&#34;</span>, <span style="color:#e6db74">&#34;string&#34;</span>),
+</span></span><span style="display:flex;"><span>      (<span style="color:#e6db74">&#34;source&#34;</span>, <span style="color:#e6db74">&#34;string&#34;</span>, <span style="color:#e6db74">&#34;source&#34;</span>, <span style="color:#e6db74">&#34;string&#34;</span>),
+</span></span><span style="display:flex;"><span>      (<span style="color:#e6db74">&#34;Max&#34;</span>, <span style="color:#e6db74">&#34;double&#34;</span>, <span style="color:#e6db74">&#34;Max&#34;</span>, <span style="color:#e6db74">&#34;double&#34;</span>),
+</span></span><span style="display:flex;"><span>      (<span style="color:#e6db74">&#34;Min&#34;</span>, <span style="color:#e6db74">&#34;double&#34;</span>, <span style="color:#e6db74">&#34;Min&#34;</span>, <span style="color:#e6db74">&#34;double&#34;</span>),
+</span></span><span style="display:flex;"><span>      (<span style="color:#e6db74">&#34;Avg&#34;</span>, <span style="color:#e6db74">&#34;double&#34;</span>, <span style="color:#e6db74">&#34;Avg&#34;</span>, <span style="color:#e6db74">&#34;double&#34;</span>),
+</span></span><span style="display:flex;"><span>      (<span style="color:#e6db74">&#34;inBedStart&#34;</span>, <span style="color:#e6db74">&#34;string&#34;</span>, <span style="color:#e6db74">&#34;inBedStart&#34;</span>, <span style="color:#e6db74">&#34;string&#34;</span>),
+</span></span><span style="display:flex;"><span>      (<span style="color:#e6db74">&#34;asleep&#34;</span>, <span style="color:#e6db74">&#34;int&#34;</span>, <span style="color:#e6db74">&#34;asleep&#34;</span>, <span style="color:#e6db74">&#34;int&#34;</span>),
+</span></span><span style="display:flex;"><span>      (<span style="color:#e6db74">&#34;rem&#34;</span>, <span style="color:#e6db74">&#34;double&#34;</span>, <span style="color:#e6db74">&#34;rem&#34;</span>, <span style="color:#e6db74">&#34;double&#34;</span>),
+</span></span><span style="display:flex;"><span>      (<span style="color:#e6db74">&#34;deep&#34;</span>, <span style="color:#e6db74">&#34;double&#34;</span>, <span style="color:#e6db74">&#34;deep&#34;</span>, <span style="color:#e6db74">&#34;double&#34;</span>),
+</span></span><span style="display:flex;"><span>      (<span style="color:#e6db74">&#34;inBed&#34;</span>, <span style="color:#e6db74">&#34;double&#34;</span>, <span style="color:#e6db74">&#34;inBed&#34;</span>, <span style="color:#e6db74">&#34;double&#34;</span>),
+</span></span><span style="display:flex;"><span>      (<span style="color:#e6db74">&#34;core&#34;</span>, <span style="color:#e6db74">&#34;double&#34;</span>, <span style="color:#e6db74">&#34;core&#34;</span>, <span style="color:#e6db74">&#34;double&#34;</span>),
+</span></span><span style="display:flex;"><span>      (<span style="color:#e6db74">&#34;sleepStart&#34;</span>, <span style="color:#e6db74">&#34;string&#34;</span>, <span style="color:#e6db74">&#34;sleepStart&#34;</span>, <span style="color:#e6db74">&#34;string&#34;</span>),
+</span></span><span style="display:flex;"><span>      (<span style="color:#e6db74">&#34;sleepEnd&#34;</span>, <span style="color:#e6db74">&#34;string&#34;</span>, <span style="color:#e6db74">&#34;sleepEnd&#34;</span>, <span style="color:#e6db74">&#34;string&#34;</span>),
+</span></span><span style="display:flex;"><span>      (<span style="color:#e6db74">&#34;inBedEnd&#34;</span>, <span style="color:#e6db74">&#34;string&#34;</span>, <span style="color:#e6db74">&#34;inBedEnd&#34;</span>, <span style="color:#e6db74">&#34;string&#34;</span>),
+</span></span><span style="display:flex;"><span>      (<span style="color:#e6db74">&#34;awake&#34;</span>, <span style="color:#e6db74">&#34;int&#34;</span>, <span style="color:#e6db74">&#34;awake&#34;</span>, <span style="color:#e6db74">&#34;int&#34;</span>)
+</span></span><span style="display:flex;"><span>     ]
+</span></span><span style="display:flex;"><span>df2 <span style="color:#f92672">=</span> df1<span style="color:#f92672">.</span>apply_mapping(m2,transformation_ctx <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;map&#34;</span>)
+</span></span><span style="display:flex;"><span>df2<span style="color:#f92672">.</span>printSchema()
+</span></span><span style="display:flex;"><span>write_S3_parquet <span style="color:#f92672">=</span> glueContext<span style="color:#f92672">.</span>getSink(
+</span></span><span style="display:flex;"><span>    path<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;s3://&#34;</span>,
+</span></span><span style="display:flex;"><span>    connection_type<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;s3&#34;</span>,
+</span></span><span style="display:flex;"><span>    updateBehaviour<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;UPDATE_✔_DATABASE&#34;</span>,
+</span></span><span style="display:flex;"><span>    partitionKeys<span style="color:#f92672">=</span>[<span style="color:#e6db74">&#34;dt&#34;</span>],
+</span></span><span style="display:flex;"><span>    compression<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;gzip&#34;</span>,
+</span></span><span style="display:flex;"><span>    enableUpdateCatalog<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>,
+</span></span><span style="display:flex;"><span>    transformation_ctx<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;write_S3_parquet&#34;</span>,
+</span></span><span style="display:flex;"><span>)
+</span></span><span style="display:flex;"><span>write_S3_parquet<span style="color:#f92672">.</span>setCatalogInfo(
+</span></span><span style="display:flex;"><span>    catalogDatabase<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;database&#34;</span>, catalogTableName<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;table&#34;</span>
+</span></span><span style="display:flex;"><span>)
+</span></span><span style="display:flex;"><span>write_S3_parquet<span style="color:#f92672">.</span>setFormat(<span style="color:#e6db74">&#34;glueparquet&#34;</span>)
+</span></span><span style="display:flex;"><span>write_S3_parquet<span style="color:#f92672">.</span>writeFrame(df2)
+</span></span><span style="display:flex;"><span>job<span style="color:#f92672">.</span>commit()
+</span></span></code></pre></div><h1 id="updated-dag">Updated DAG</h1>
+<p>The changes so far described above change the DAG in the earlier post to something that now looks like this. Given that two sources are used the need to partition at source becomes a necessity. That way periodic one time uploads of AH data can override HAE if it is incomplete or if there are errors</p>
+<style>
+    .center {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    figure figcaption {
+        text-align: center;
+    }
+</style>
+
+<figure>
+    <img src="/images/three.drawio.png" alt="Alt text" class="center">
+    <figcaption>AWS Services</figcaption>
+</figure>
+<h1 id="workout-data">Workout data</h1>
+<p>Some workout data is embedded in the list of Records fields which makes this a moot point. The more deeper problem that I am currently procrastinating to avoid is how to include it in the lake for query and dashboarding. A single workout metric doesn&rsquo;t make sense without context in the same way a generic Records metric can be made sense of just from the quantity and time of observation. Instead workout data has the context of being nested within the workout. For example your heart rate might be low in a workout data record but that might be because you are in a cool down period after doing intervals or because you are fitter than you were years ago.</p>
+<h1 id="hae-experiences">HAE experiences</h1>
+<p>Since there don&rsquo;t appear to be reviews or testimonials about using HAE to export data I will embed a review within this post. One thing worth bringing up is that there are many metrics listed on the health exporter site as being available for download into the REST API. In practice that is misleading. The type of database I am using is HIVE style which requires all the data being the same type. The issue is that the data all basically needs to be numeric. Some of the data upon inspection in my export.xml file is not numeric but a string that alludes to a cardinal value. This is a no go when it comes to putting together data for Athena query or Quicksight. Things might be different if you were to use a database system that allows for mixed type like mongodb.</p>
+<p>The issue mentioned earlier of vast amounts of the same low value approaching zero persists also in my daily REST API uploads as well but it is not deterministic like it is when it comes to backfilling historical records. This is an area I am still investigating and troubleshooting and may update later. Another problem is that I do not have complete confidence that the data doesn&rsquo;t have holes for the REST API uploads. It frequently does but when there are over 100 metrics to keep track of this seems forgivable especially considering Apple is not very friendly to develop for in applications such as this.</p>
+<p>Despite what I mentioned above the developer is incredibly responsive online through Discord so this might be resolved at some point in the future. I am just writing this post with how the situation looks like to me now.</p>
+<h1 id="conclusion">Conclusion</h1>
+<p>Once the transformed parquet data is imported into QuickSight it becomes possible to get line charts by filtering based on the column containing the name of the metric. For the chart below I have a gap of a few months when I was without an Apple Watch. From August 2022 to May 2023 my walking heart rate average trended lower as I gained fitness.</p>
+<style>
+    .center {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    figure figcaption {
+        text-align: center;
+    }
+</style>
+
+<figure>
+    <img src="/images/Screenshot25.png" alt="Alt text" class="center">
+    <figcaption>Average Walking Heart Rate</figcaption>
+</figure>
+
+</article>
+
+
+
+</html>
