@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<title>The AWS Bankruptcy Triggering Bill Rite of Passage | Making the Ordinary Extraordinary With Data Together</title>
+<meta charset="utf-8">
+<meta name="generator" content="Hugo 0.136.5">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="https://sumant-28.github.io/css/index.css">
+<link rel="canonical" href="https://sumant-28.github.io/posts/awscosts/">
+<link rel="alternate" type="application/rss+xml" href="" title="Making the Ordinary Extraordinary With Data Together">
+
+<header>
+  
+    <a href="https://sumant-28.github.io/" class="title">Making the Ordinary Extraordinary With Data Together</a>
+  
+  
+</header>
+
+<article>
+  <header>
+    <h1>The AWS Bankruptcy Triggering Bill Rite of Passage</h1>
+    <time datetime="2025-02-20T23:18:42&#43;13:00">February 20, 2025</time>
+  </header>
+  <p>This post deals with a common theme in the journey of learning cloud data infrastructure and how it manifested for me while trying to learn AWS.</p>
+<p>When I saw prior examples of people relaying stories of spiralling costs in AWS it came from spinning instances of EC2 but my story of how it happened involved using the more harmless seeming Glue.</p>
+<h1 id="how-it-happened">How it happened</h1>
+<p>It started when trying to do an ETL job that was just complicated enough to not be possible with the visual interface. Here I have to confess some of the error was on my part because I named my tables incorrectly in a hurry so I for some reason thought I needed to unnest, convert data types and resolve choice all in the same job while in reality I only needed to do two of those things.</p>
+<p>There are two aspects to this experience that I find disconcerting. One is that this is not an archetypal way to be charged a lot of money unexpectedly while using AWS. It makes me weary that the entirety of AWS is a mine field of potentially large costs and while I can get a waiver this time how many more strikes do I get? Another aspect is that immediately after finding out I had a massive bill owing to AWS I could not get to the bottom of it because AWS makes you wait a full day (24 hours I counted) before you are allowed to set up Cost Explorer. Before I set up that service I only had a vague inkling of what may be causing the problem.</p>
+<h1 id="my-investigation">My Investigation</h1>
+<p>After setting up cost explorer I got a graph like this</p>
+<style>
+    .center {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    figure figcaption {
+        text-align: center;
+    }
+</style>
+
+<figure>
+    <img src="/images/costings.png" alt="Alt text" class="center">
+    <figcaption>Cost Explorer</figcaption>
+</figure>
+<p>Eventually after fiddling around with some of the filters I got to a usage cost origin of APS2-GlueInteractiveSession-DPU-Hour which is a term that made no sense to me. After some searching online I found I am not the only one with these problems. One other person has experienced <a href="https://repost.aws/questions/QU_Ff-QeM7Ta2Bg9TwLd0agw/optimizing-aws-glue-costs-how-to-reduce-expenses-for-interactive-sessions">something similar</a>.</p>
+<p>It seems by default that AWS gives you an enormous enterprise level of online compute so you are not constrained figuring out how your ETL job effects your stored data interactively. I tested it again in the process of writing about my experience and got the exact same boilerplate when starting a notebook as shown below.</p>
+<style>
+    .center {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    figure figcaption {
+        text-align: center;
+    }
+</style>
+
+<figure>
+    <img src="/images/boilerplate.png" alt="Alt text" class="center">
+    <figcaption>The configuration blocks before you write your own code</figcaption>
+</figure>
+<p>Going by the guidelines of the linked forum post the idle timeout variable should be set at 20 which is a 99% reduction and the number of workers should instead be 1 which is the minimum.</p>
+<p>Which brings me to my point that if you are writing a Glue job using a notebook in AWS you need to know exactly what you are doing beforehand. You can&rsquo;t use this as a way to both execute and learn what to write as code for execution. This is a very foreign concept to me as someone who has never really used cloud computing to learn coding because it just seems like something that should be as free as typing into Visual Studio Code as I write this script. It is also hard for me to guage best practices. Sometimes in AWS I get distracted doing something else within the console. In this case do I terminate the notebook first while switching tabs? Should I also spend as little time as possible writing the script in which case I basically prototype the code in a free environment instead?</p>
+<p>I am still not sure what exactly has caused the costs to accumulate so high. Is it merely the amount of time I am spending in the notebook? Or maybe it has something to do with executing code blocks which accumulates cost? Or previewing data which you can do even in the visual interface. I also had no choice but to use the entirety of my data rather than a sample because I needed to make sure the job could deal with any values that might cause errors because they related to different quantities.</p>
+<h1 id="conclusion">Conclusion</h1>
+<p>While it is sometimes portrayed as getting a waiver of several hundred dollars of bills in AWS as a piece of cake the reality for me was far from settled. It involved several weeks back and forth of dealing with customer support. To their credit they were responsive but to say this was a stress free experience is not accurate. It also involves a literal phone call with someone.</p>
+<p>All of the spike in costs are due to Glue.</p>
+<style>
+    .center {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    figure figcaption {
+        text-align: center;
+    }
+</style>
+
+<figure>
+    <img src="/images/baker.png" alt="Alt text" class="center">
+    <figcaption>Not a nice predicament</figcaption>
+</figure>
+
+</article>
+
+
+
+</html>

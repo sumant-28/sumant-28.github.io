@@ -6,8 +6,15 @@
     <description>Recent content on Making the Ordinary Extraordinary With Data Together</description>
     <generator>Hugo</generator>
     <language>en-us</language>
-    <lastBuildDate>Mon, 20 Jan 2025 14:29:11 +1300</lastBuildDate>
+    <lastBuildDate>Thu, 20 Feb 2025 23:18:42 +1300</lastBuildDate>
     <atom:link href="https://sumant-28.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>The AWS Bankruptcy Triggering Bill Rite of Passage</title>
+      <link>https://sumant-28.github.io/posts/awscosts/</link>
+      <pubDate>Thu, 20 Feb 2025 23:18:42 +1300</pubDate>
+      <guid>https://sumant-28.github.io/posts/awscosts/</guid>
+      <description>&lt;p&gt;This post deals with a common theme in the journey of learning cloud data infrastructure and how it manifested for me while trying to learn AWS.&lt;/p&gt;&#xA;&lt;p&gt;When I saw prior examples of people relaying stories of spiralling costs in AWS it came from spinning instances of EC2 but my story of how it happened involved using the more harmless seeming Glue.&lt;/p&gt;&#xA;&lt;h1 id=&#34;how-it-happened&#34;&gt;How it happened&lt;/h1&gt;&#xA;&lt;p&gt;It started when trying to do an ETL job that was just complicated enough to not be possible with the visual interface. Here I have to confess some of the error was on my part because I named my tables incorrectly in a hurry so I for some reason thought I needed to unnest, convert data types and resolve choice all in the same job while in reality I only needed to do two of those things.&lt;/p&gt;</description>
+    </item>
     <item>
       <title>Apple Health Data Lake in AWS – Odds and Ends</title>
       <link>https://sumant-28.github.io/posts/datalakept2/</link>

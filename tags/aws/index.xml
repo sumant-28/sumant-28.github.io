@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Posts on Making the Ordinary Extraordinary With Data Together</title>
-    <link>https://sumant-28.github.io/posts/</link>
-    <description>Recent content in Posts on Making the Ordinary Extraordinary With Data Together</description>
+    <title>Aws on Making the Ordinary Extraordinary With Data Together</title>
+    <link>https://sumant-28.github.io/tags/aws/</link>
+    <description>Recent content in Aws on Making the Ordinary Extraordinary With Data Together</description>
     <generator>Hugo</generator>
     <language>en-us</language>
     <lastBuildDate>Thu, 20 Feb 2025 23:18:42 +1300</lastBuildDate>
-    <atom:link href="https://sumant-28.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="https://sumant-28.github.io/tags/aws/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>The AWS Bankruptcy Triggering Bill Rite of Passage</title>
       <link>https://sumant-28.github.io/posts/awscosts/</link>
