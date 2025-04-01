@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<title>Replacing QuickSight With Streamlit Is Like Opening Pandoras Box | Making the Ordinary Extraordinary With Data Together</title>
+<meta charset="utf-8">
+<meta name="generator" content="Hugo 0.136.5">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="https://sumant-28.github.io/css/index.css">
+<link rel="canonical" href="https://sumant-28.github.io/posts/streamlitec2/">
+<link rel="alternate" type="application/rss+xml" href="" title="Making the Ordinary Extraordinary With Data Together">
+
+<header>
+  
+    <a href="https://sumant-28.github.io/" class="title">Making the Ordinary Extraordinary With Data Together</a>
+  
+  
+</header>
+
+<article>
+  <header>
+    <h1>Replacing QuickSight With Streamlit Is Like Opening Pandoras Box</h1>
+    <time datetime="2025-03-20T13:07:57&#43;13:00">March 20, 2025</time>
+  </header>
+  <h1 id="introduction">Introduction</h1>
+<p>In my prior blog post I wrote about how I was paying too much for Glue but now I want to draw attention to paying too much for QuickSight. While my Glue bill felt like being shot in the chest QuickSight is like a death by a thousand cuts. On a home project like this I would hope to pay $0 but theres no such thing as a free lunch. Overall I am happy with what I have chosen to implement for now and will discuss later on suggestions for further improvement.</p>
+<h1 id="open-source-alternative-to-dashboards">Open Source Alternative to Dashboards</h1>
+<p>Streamlit is a free and open source library in Python. It enables me to create relatively high quality dashboards with much less code than what it takes to write a web page with HTML, CSS and Javascript. I have used Dash and Plotly before but in the short time since I have started using Streamlit I have come to view it as the future for making dashboards in Python. I found the visual options available for me in Streamlit actually eclipsed what was available in QuickSight which I view as limited now especially for the price. Streamlit still is nowhere near as powerful or versatile as Power BI and it may never get there due to being free and open source but for my personal use it is more than good enough.</p>
+<h1 id="developing-the-app-here">Developing the App Here</h1>
+<p>On QuickSight you make dashboards whereas on Streamlit you make a web app so I am going to replace my terminology from dashboard to app to reflect that. Another difference is that I can access it anywhere with an internet connection rather than needing to use the AWS Management Console for QuickSight. This I consider to be a quality of life upgrade setting aside the visual changes. My usage of this app from a mobile device has driven how I designed it in terms of what I want to include and exclude. I don&rsquo;t want this app to include too much data because it would become bloated and slow. Instead that sort of extensive exploratory data analysis is best left for home use on the computer. On the other hand I do not want this to be anything close to a real time dashboard because I am getting a drip of sometimes unreliable data using batch ingest on my data lake. Another consideration is near instant data is also available and accessible from the data source itself which in this case is my Apple Watch or iPhone. As it turns out those sources would be better than anything I can come up with because Apple has put some effort in the time series graphs I can view in my Health app or in my daily fitness progression on my Apple Fitness app. My only problem has always been that the data doesn&rsquo;t feel like its my mine when its locked in to those silos. I cannot choose for example what metrics are displayed visually in what increments and across which spans of time.</p>
+<p>The type of data that makes the most sense for dashboards is that which can be scanned quickly, can be checked up on throughout the day and may require only mentally light levels of comprehension.</p>
+<style>
+    .center {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    figure figcaption {
+        text-align: center;
+    }
+</style>
+
+<figure>
+    <img src="/images/healthapp.png" alt="Alt text" class="center">
+    <figcaption>Dashing</figcaption>
+</figure>
+<p>With a weekly or monthly cadence I can look for trends that may align with common fitness goals. These can include making sure I am running above a minimum amount of distance every week or that I am consistently being active (judged by my stand hours) during the afternoon over the course of a month. I notice that after doing a morning activity I tend to spend the rest of the day languid thinking that I have somehow earned it even though extended periods of being sedantary is damaging to long term health even for people who are active and healthy. What I have focused on for now in an example app is that I am cycling, running and walking through a variety of locations so I do not lose motivation from the monotony of the same route every time. Another metric is that I am doing a variety of exercise types again trying to stave off lack of motivation from monotony.</p>
+<p>These visuals are accomplished due to the integration Streamlit has with an extensive amount of custom visuals some of which are obscure open source creations made by a small team of one.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> numpy <span style="color:#66d9ef">as</span> np
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> matplotlib.pyplot <span style="color:#66d9ef">as</span> plt
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> july
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> july.utils <span style="color:#f92672">import</span> date_range
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> csv
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> folium
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> streamlit <span style="color:#66d9ef">as</span> st
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> streamlit_folium <span style="color:#f92672">import</span> st_folium
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> json
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> pandas <span style="color:#66d9ef">as</span> pd
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> awswrangler <span style="color:#66d9ef">as</span> wr
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> boto3
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> streamlit_nested_layout
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> os
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>st<span style="color:#f92672">.</span>set_page_config(
+</span></span><span style="display:flex;"><span>    page_title<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;Health App&#34;</span>,
+</span></span><span style="display:flex;"><span>    page_icon<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;🏂&#34;</span>,
+</span></span><span style="display:flex;"><span>    layout<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;wide&#34;</span>,
+</span></span><span style="display:flex;"><span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>dat1 <span style="color:#f92672">=</span> wr<span style="color:#f92672">.</span>s3<span style="color:#f92672">.</span>read_json(<span style="color:#e6db74">&#34;s3://sumant28-testinguploads/location.json&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">jsonning</span>(modes):
+</span></span><span style="display:flex;"><span>    v1 <span style="color:#f92672">=</span> []
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">0</span>, len(dat1)):
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> dat1[<span style="color:#e6db74">&#39;name&#39;</span>]<span style="color:#f92672">.</span>loc[i] <span style="color:#f92672">==</span> modes:
+</span></span><span style="display:flex;"><span>            v2 <span style="color:#f92672">=</span> []
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">for</span> j <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">0</span>, len(dat1[<span style="color:#e6db74">&#39;route&#39;</span>]<span style="color:#f92672">.</span>loc[i])):
+</span></span><span style="display:flex;"><span>                lat <span style="color:#f92672">=</span> dat1[<span style="color:#e6db74">&#39;route&#39;</span>]<span style="color:#f92672">.</span>loc[i][j][<span style="color:#e6db74">&#39;latitude&#39;</span>]
+</span></span><span style="display:flex;"><span>                lon <span style="color:#f92672">=</span> dat1[<span style="color:#e6db74">&#39;route&#39;</span>]<span style="color:#f92672">.</span>loc[i][j][<span style="color:#e6db74">&#39;longitude&#39;</span>]
+</span></span><span style="display:flex;"><span>                pair <span style="color:#f92672">=</span> (lat,lon)
+</span></span><span style="display:flex;"><span>                v2<span style="color:#f92672">.</span>append(pair)
+</span></span><span style="display:flex;"><span>            v1<span style="color:#f92672">.</span>append(v2)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> v1
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>dates <span style="color:#f92672">=</span> date_range(<span style="color:#e6db74">&#34;2025-02-01&#34;</span>, <span style="color:#e6db74">&#34;2025-02-28&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>df <span style="color:#f92672">=</span> wr<span style="color:#f92672">.</span>s3<span style="color:#f92672">.</span>read_csv(<span style="color:#e6db74">&#34;s3://sumant28-testinguploads/workout_data.csv&#34;</span>)
+</span></span><span style="display:flex;"><span>df[[<span style="color:#e6db74">&#39;dt&#39;</span>,<span style="color:#e6db74">&#39;two&#39;</span>,<span style="color:#e6db74">&#39;three&#39;</span>]] <span style="color:#f92672">=</span> df[<span style="color:#e6db74">&#39;start&#39;</span>]<span style="color:#f92672">.</span>str<span style="color:#f92672">.</span>split(<span style="color:#e6db74">&#34; &#34;</span>,expand<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>)
+</span></span><span style="display:flex;"><span>df[<span style="color:#e6db74">&#39;one&#39;</span>] <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>dfm1 <span style="color:#f92672">=</span> df[<span style="color:#e6db74">&#39;calories&#39;</span>]<span style="color:#f92672">.</span>sum()
+</span></span><span style="display:flex;"><span>dfm2 <span style="color:#f92672">=</span> df[<span style="color:#e6db74">&#39;seconds&#39;</span>]<span style="color:#f92672">.</span>sum()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">calendaries</span>(type, df):
+</span></span><span style="display:flex;"><span>    df <span style="color:#f92672">=</span> df[df[<span style="color:#e6db74">&#39;name&#39;</span>] <span style="color:#f92672">==</span> type]
+</span></span><span style="display:flex;"><span>    july<span style="color:#f92672">.</span>month_plot(df[<span style="color:#e6db74">&#39;dt&#39;</span>], df[<span style="color:#e6db74">&#39;one&#39;</span>], month<span style="color:#f92672">=</span><span style="color:#ae81ff">2</span>, date_label<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>)
+</span></span><span style="display:flex;"><span>    st<span style="color:#f92672">.</span>pyplot(plt, use_container_width<span style="color:#f92672">=</span><span style="color:#66d9ef">False</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>col <span style="color:#f92672">=</span> st<span style="color:#f92672">.</span>columns((<span style="color:#ae81ff">3</span>,<span style="color:#ae81ff">1</span>), gap<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;small&#39;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>d <span style="color:#f92672">=</span> wr<span style="color:#f92672">.</span>s3<span style="color:#f92672">.</span>read_csv(<span style="color:#e6db74">&#34;s3://sumant28-testinguploads/heart_rate_data.csv&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">with</span> col[<span style="color:#ae81ff">0</span>]:
+</span></span><span style="display:flex;"><span>    st<span style="color:#f92672">.</span>title(<span style="color:#e6db74">&#34;Health Dashboard&#34;</span>)
+</span></span><span style="display:flex;"><span>    st<span style="color:#f92672">.</span>header(<span style="color:#e6db74">&#34;Monthly KPIs&#34;</span>)
+</span></span><span style="display:flex;"><span>    c1, c2<span style="color:#f92672">=</span> st<span style="color:#f92672">.</span>columns(<span style="color:#ae81ff">2</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">with</span> c1:
+</span></span><span style="display:flex;"><span>        st<span style="color:#f92672">.</span>metric(label<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;Calories Burned&#34;</span>, 
+</span></span><span style="display:flex;"><span>                  value<span style="color:#f92672">=</span>int(dfm1),
+</span></span><span style="display:flex;"><span>                  delta <span style="color:#f92672">=</span> int(dfm1 <span style="color:#f92672">-</span> <span style="color:#ae81ff">27039</span>))
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">with</span> c2:
+</span></span><span style="display:flex;"><span>        st<span style="color:#f92672">.</span>metric(label<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;Total Seconds Active&#34;</span>, 
+</span></span><span style="display:flex;"><span>                  value<span style="color:#f92672">=</span>int(dfm2),
+</span></span><span style="display:flex;"><span>                  delta <span style="color:#f92672">=</span> int(dfm2 <span style="color:#f92672">-</span> <span style="color:#ae81ff">261626</span>))
+</span></span><span style="display:flex;"><span>    st<span style="color:#f92672">.</span>header(<span style="color:#e6db74">&#34;Walking Average Heart Rate&#34;</span>)
+</span></span><span style="display:flex;"><span>    st<span style="color:#f92672">.</span>line_chart(d, x<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;dt&#34;</span>, y<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;qty&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">with</span> col[<span style="color:#ae81ff">1</span>]:
+</span></span><span style="display:flex;"><span>    st<span style="color:#f92672">.</span>header(<span style="color:#e6db74">&#34;Outdoor Activity&#34;</span>)
+</span></span><span style="display:flex;"><span>    options <span style="color:#f92672">=</span> [<span style="color:#e6db74">&#39;Running&#39;</span>, <span style="color:#e6db74">&#39;Cycling&#39;</span>, <span style="color:#e6db74">&#39;Walking&#39;</span>]
+</span></span><span style="display:flex;"><span>    map <span style="color:#f92672">=</span> folium<span style="color:#f92672">.</span>Map(location<span style="color:#f92672">=</span>[<span style="color:#f92672">-</span><span style="color:#ae81ff">36.914200</span>, <span style="color:#ae81ff">174.765323</span>], zoom_start<span style="color:#f92672">=</span><span style="color:#ae81ff">11</span>)
+</span></span><span style="display:flex;"><span>    page <span style="color:#f92672">=</span> st<span style="color:#f92672">.</span>selectbox(<span style="color:#e6db74">&#39;&#39;</span>, options)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> page <span style="color:#f92672">==</span> <span style="color:#e6db74">&#39;Cycling&#39;</span>:
+</span></span><span style="display:flex;"><span>        v1 <span style="color:#f92672">=</span> jsonning(<span style="color:#e6db74">&#39;Outdoor Cycling&#39;</span>)
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">0</span>, len(v1)):
+</span></span><span style="display:flex;"><span>            folium<span style="color:#f92672">.</span>PolyLine(v1[i],
+</span></span><span style="display:flex;"><span>                        color<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;blue&#34;</span>,
+</span></span><span style="display:flex;"><span>                        weight<span style="color:#f92672">=</span><span style="color:#ae81ff">3</span>)<span style="color:#f92672">.</span>add_to(map)
+</span></span><span style="display:flex;"><span>        st_folium(map, height<span style="color:#f92672">=</span><span style="color:#ae81ff">200</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">elif</span> page <span style="color:#f92672">==</span> <span style="color:#e6db74">&#39;Running&#39;</span>:        
+</span></span><span style="display:flex;"><span>        v1 <span style="color:#f92672">=</span> jsonning(<span style="color:#e6db74">&#39;Outdoor Run&#39;</span>)
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">0</span>, len(v1)):
+</span></span><span style="display:flex;"><span>            folium<span style="color:#f92672">.</span>PolyLine(v1[i],
+</span></span><span style="display:flex;"><span>                        color<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;#eb34e5&#34;</span>,
+</span></span><span style="display:flex;"><span>                        weight<span style="color:#f92672">=</span><span style="color:#ae81ff">3</span>)<span style="color:#f92672">.</span>add_to(map)
+</span></span><span style="display:flex;"><span>        st_folium(map, height<span style="color:#f92672">=</span><span style="color:#ae81ff">200</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">elif</span> page <span style="color:#f92672">==</span> <span style="color:#e6db74">&#39;Walking&#39;</span>:
+</span></span><span style="display:flex;"><span>        v1 <span style="color:#f92672">=</span> jsonning(<span style="color:#e6db74">&#39;Outdoor Walk&#39;</span>)
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">0</span>, len(v1)):
+</span></span><span style="display:flex;"><span>            folium<span style="color:#f92672">.</span>PolyLine(v1[i],
+</span></span><span style="display:flex;"><span>                        color<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;#f20505&#34;</span>,
+</span></span><span style="display:flex;"><span>                        weight<span style="color:#f92672">=</span><span style="color:#ae81ff">3</span>)<span style="color:#f92672">.</span>add_to(map)
+</span></span><span style="display:flex;"><span>        st_folium(map, height<span style="color:#f92672">=</span><span style="color:#ae81ff">200</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">with</span> col[<span style="color:#ae81ff">1</span>]:
+</span></span><span style="display:flex;"><span>    st<span style="color:#f92672">.</span>header(<span style="color:#e6db74">&#34;Calendar&#34;</span>)
+</span></span><span style="display:flex;"><span>    options <span style="color:#f92672">=</span> df[<span style="color:#e6db74">&#39;name&#39;</span>]<span style="color:#f92672">.</span>unique()
+</span></span><span style="display:flex;"><span>    page <span style="color:#f92672">=</span> st<span style="color:#f92672">.</span>selectbox(<span style="color:#e6db74">&#39;&#39;</span>, options)
+</span></span><span style="display:flex;"><span>    plt<span style="color:#f92672">.</span>figure(figsize<span style="color:#f92672">=</span>(<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">1</span>))
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> page <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;Outdoor Cycling&#34;</span>:
+</span></span><span style="display:flex;"><span>        calendaries(<span style="color:#e6db74">&#34;Outdoor Cycling&#34;</span>, df)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">elif</span> page <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;Outdoor Run&#34;</span>:
+</span></span><span style="display:flex;"><span>        calendaries(<span style="color:#e6db74">&#34;Outdoor Run&#34;</span>, df)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">elif</span> page <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;Functional Strength Training&#34;</span>:
+</span></span><span style="display:flex;"><span>        calendaries(<span style="color:#e6db74">&#34;Functional Strength Training&#34;</span>, df)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">elif</span> page <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;Yoga&#34;</span>:
+</span></span><span style="display:flex;"><span>        calendaries(<span style="color:#e6db74">&#34;Yoga&#34;</span>, df)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">elif</span> page <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;Outdoor Walk&#34;</span>:
+</span></span></code></pre></div><h3 id="aws-wrangler">AWS Wrangler</h3>
+<p>The most popular library for accessing AWS data in Python is boto3 but I found it to be an awful experience to access data using SQL queries from my data lake. Instead I had to rely on another library called awswrangler. For the purposes of demonstration I am accessing data from a &ldquo;gold&rdquo; layer of my data lake which is static but for my actual personal use it matters considerably.</p>
+<h1 id="from-here-to-there">From Here to There</h1>
+<p>Once you have built your app you need a method to transfer it from your machine to a server. I have encountered two methods to do so which I will explain in order to be able to use shorthand later on</p>
+<h3 id="method-1-docker-container">Method 1: Docker Container</h3>
+<p>Before this post I had never used Docker but I have since learned that it is a method of porting applications between machines common in software engineering. With this method you transfer the whole app as well as the whole machine that made it so it can be deployed anywhere.</p>
+<h3 id="method-2-plain-text-instructions">Method 2: Plain text Instructions</h3>
+<p>An alternative method is to store the instructions on building the app in text files that you then access from the remote server to build the app from scratch. In this method you do not transfer anything between your local machine and the server but you can indirectly make the connection with a github repository which is the way I would do it if I was following this method.</p>
+<h1 id="what-exactly-is-there">What Exactly is There</h1>
+<p>If I am following Method 2 (M2) from the previous section the only choice I see is to use an EC2 instance for a server. However if I am following Method 1 (M1) AWS offers a truly bewildering array of cloud services to deploy Docker containers including EC2, ECS, Fargate, Lambda, Lightsail, Elastic Beanstalk, and AppRunner.</p>
+<h1 id="my-plan">My plan</h1>
+<p>My reasons for preferring M2 to M1 are as follows:</p>
+<ul>
+<li>If I decide to change the app with a small tweak I can merely change the source code in the github repository rather than create a new image and deploy it to the server</li>
+<li>Related to the above Docker files take up lots of space and learning how to make them smaller is a skill that I do not want to spend extra time learning.</li>
+<li>I wanted to be able to boot strap the server with app deployment instructions rather than having to create one interactively using the command line although this was later not possible either way.</li>
+<li>I didn&rsquo;t want to learn how to deploy containers on AWS. There are too many options for me to comprehend and I hoped I could side step the whole topic by not deploying a container in the first place.</li>
+<li>After you deploy the app and see that it is working you have a middle stage where you build the image which you can preview on your machine before deploying it to the server. Normally this is fine for simple examples. However my experince was the app which relies on AWS credentials does not render even though it somehow works in the prototyping stage. This was disconcerting to a newcomer like me not heavy in computer science background because I could not grasp at a theoretical level what happened. At the final stage once you allow the EC2 instance to have an IAM role with the required permissions the app renders fine.</li>
+</ul>
+<h1 id="m2-deployment">M2 deployment</h1>
+<p>With EC2 user data I was able to automatically perform all the boilerplate lines of code to set up the app. I was surprised to learn that the libraries needed for my app were not possible to be downloaded globally so I had no choice but to create a virtual environment.</p>
+<h1 id="where-i-came-undone">Where I came undone</h1>
+<p>That was my plan but I ended up choosing M2 anyway. To explain why I have some background context to provide. I have seen many simple Streamlit example apps but it is misleading to think the app that you actually design to be useful for your purposes would fit that mould. Instead what you end up creating will likely require a niche visual that requires a narrow subset of dependencies inevitably leading you to dependency hell. I developed my Streamlit app locally using a newer version of Python (3.11) and I somehow managed to create an app that worked. When it came time to deploy it on an EC2 server I noticed the Python version was 3.9 which is behind just enough for that narrow corridor of dependencies to not be possible to install. I briefly flirted with the idea of upgrading the version of the EC2 Amazon Linux Python version to something newer but that was not simple to do at all which is why I reluctantly turned to Docker.</p>
+<h1 id="implementation-details">Implementation Details</h1>
+<p>With my Docker image working I was ready to deploy on EC2. If I didn&rsquo;t make myself clear enough before I will reiterate again my main priority is getting the cost to be as low as possible. Therefore I chose the lowest cost instance type currently available which is t2.micro. This is actually not true because there is one tier below that called t2.nano however that is not Free tier eligible which I currently have my account set up with. It is something worth exploring once I am not on the free tier however I am worried that Docker might require more processing power than lowest tier instances can handle which is another reason in general I would prefer M2 to M1.</p>
+<style>
+    .center {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    figure figcaption {
+        text-align: center;
+    }
+</style>
+
+<figure>
+    <img src="/images/spotty.png" alt="Alt text" class="center">
+    <figcaption>The Costs May Be Further Lowered With Maximum Prices</figcaption>
+</figure>
+<p>After deciding on an instance type choosing EC2 spot was a no brainer given that it is cheaper pro rata without requiring a contract or commitment. However this also means I need to be mindful of interruptions. Once an interruption happens the public IP assigned to the instance changes meaning that if I was hoping to access the app from my mobile device it will no longer work. The way to get around this is with an Elastic IP address so that I can rely on the same static address regardless of inevitable interruptions. I was not able to understand or have time to understand the implications of manually setting a maximum price so I ignored it. The cost will end up being cheaper regardless as far as I understand.</p>
+<style>
+    .center {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    figure figcaption {
+        text-align: center;
+    }
+</style>
+
+<figure>
+    <img src="/images/t2.png" alt="Alt text" class="center">
+    <figcaption>Cheapest Tier More Than Free</figcaption>
+</figure>
+<p>I will not go over the code to deploy my app on EC2 because there are many examples online. I used <code>scp</code> to transfer the local files to the EC2 instance.</p>
+<h1 id="unfortunate-dead-ends">Unfortunate Dead Ends</h1>
+<p>The pandora&rsquo;s box I opened meant I fell down some rabbit holes trying to lower costs or improve efficiency which I will address now</p>
+<h2 id="app-scheduling">App Scheduling</h2>
+<p>When I created this project I had in mind that I would only need to have it up on the server for a limited amount of time per day. As little as a few minutes as long as it was predictable given how simple the information being conveyed is. As it turns out this is generally not possible as far as I have understood. This is because if you make your app run only a few minutes per day you lose the consistency of the IP address. However when you then assign an elastic IP address AWS charges when that is not being used which means if you plan your app to run an hour a day AWS charges you 23 hours a day for the elastic IP address not in use. These charges are similar to the cost of the EC2 instance running which I genuinely found surprising that the service costs seem to disincentivise this approach. I have an inkling that if I register a domain name or deploy the container directly then something like this might be possible but I was unable to understand fully so I might return to this later.</p>
+<h2 id="bootstrapping">Bootstrapping</h2>
+<p>I knew in advance that I wanted my app to be deployed on EC2 spot before thinking about setting it up with M2. To automate the process and have it be ready for periodic stops to the server I was imagining two types of start up scripts. EC2 allows users to have two types of start up scripts. On user data you can write shell commands that execute once when an app starts for the first time or from a stopped state. On cloud config you can give instructions so that instead you make sure the user data is run every time the app is resumed from a stopped state. This has implications for periodic interruptions that are inevitable when using EC2 spot. I was hoping to have two types of startup scripts one for when the instance is started from the first time and the other for subsequent restarts but it seems as though that is not possible.</p>
+<p>This whole investigation ended up being a waste of time when I found out that EC2 spot interruptions forcing the app to stop you can make it hibernate where the server resumes with no instruction needing to be given at the administrator level.</p>
+<h2 id="crontab-and-refreshing">Crontab and Refreshing</h2>
+<p>For the kind of app I was building I had in mind daily app refreshes so that the data on the app was not for the wrong period or that it omitted the most recent data available in the data lake. This was before I found out that every single interaction with a Streamlit app makes the whole app restart including the data load. This also explains why my relatively heavy app was so slow and unresponsive. In future when I implement caching I will have to worry about how to refresh daily cached data but I might leave that to later blog post.</p>
+<h1 id="conclusion">Conclusion</h1>
+<p>With deployment completed I have successfully reduced my cost to 0 given I am currently on the free tier and from then on much less than the $24USD per month for QuickSight. I will conclude this post by writing a few responses to what I see as potential FAQs.</p>
+<h1 id="faq">FAQ</h1>
+<h3 id="why-not-deploy-a-docker-container-in-a-cloud-service-built-for-docker-containers-like-ecs-or-fargate">Why not deploy a docker container in a cloud service built for docker containers like ECS or Fargate</h3>
+<p>With finite time I was unable to grasp how these services differ, why they might be better, or if they are in fact cheaper. When I spent time looking in to this topic I found that the touted benefits included things that are irrelevant for me writing a simple app with an audience of one. For example Application Load Balancing (ALB) and scaling do not matter.</p>
+<h3 id="what-about-using-a-free-platform-to-host-the-app-like-docker-hub">What about using a free platform to host the app like Docker Hub?</h3>
+<p>What is really convenient about having this whole solution in AWS is that I can grant access to my data with an IAM role. If I were to export or migrate the app somewhere else I would have to find a way to give my credentials probably in plain text format. Something just does not sit well with me about that and I am concerned about leaks and hacks.</p>
+<h3 id="why-not-put-the-site-on-a-low-code-container-option-like-lightsail-apprunner">Why not put the site on a low code container option like Lightsail, AppRunner?</h3>
+<p>To my knowledge some of these options do not work well with Streamlit apps.</p>
+<h3 id="why-not-use-route-53-to-register-a-domain-name">Why not use Route 53 to register a domain name?</h3>
+<p>That costs money and I want to keep costs at a minimum. One consideration however is that apparently going with this option might allow my goal of only having my app running for reduced hours of the day but I am yet to fully investigate this.</p>
+<h3 id="why-not-use-amazon-cognito-to-create-a-password-system-to-protect-your-data-being-viewed-by-others">Why not use Amazon Cognito to create a password system to protect your data being viewed by others?</h3>
+<p>This costs money and if I am the only one who knows my static IP address I feel like that is enough for now.</p>
+<h3 id="why-not-reduce-costs-further-by-having-a-raspberry-pi-server">Why not reduce costs further by having a Raspberry Pi server?</h3>
+<p>I am considering this after my AWS free tier runs out. One thing I am mindful of is how powerful small self hosted server computers are and whether or not they can handle Docker.</p>
+
+</article>
+
+
+
+</html>

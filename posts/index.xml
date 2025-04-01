@@ -6,8 +6,15 @@
     <description>Recent content in Posts on Making the Ordinary Extraordinary With Data Together</description>
     <generator>Hugo</generator>
     <language>en-us</language>
-    <lastBuildDate>Thu, 20 Feb 2025 23:18:42 +1300</lastBuildDate>
+    <lastBuildDate>Thu, 20 Mar 2025 13:07:57 +1300</lastBuildDate>
     <atom:link href="https://sumant-28.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Replacing QuickSight With Streamlit Is Like Opening Pandoras Box</title>
+      <link>https://sumant-28.github.io/posts/streamlitec2/</link>
+      <pubDate>Thu, 20 Mar 2025 13:07:57 +1300</pubDate>
+      <guid>https://sumant-28.github.io/posts/streamlitec2/</guid>
+      <description>&lt;h1 id=&#34;introduction&#34;&gt;Introduction&lt;/h1&gt;&#xA;&lt;p&gt;In my prior blog post I wrote about how I was paying too much for Glue but now I want to draw attention to paying too much for QuickSight. While my Glue bill felt like being shot in the chest QuickSight is like a death by a thousand cuts. On a home project like this I would hope to pay $0 but theres no such thing as a free lunch. Overall I am happy with what I have chosen to implement for now and will discuss later on suggestions for further improvement.&lt;/p&gt;</description>
+    </item>
     <item>
       <title>The AWS Bankruptcy Triggering Bill Rite of Passage</title>
       <link>https://sumant-28.github.io/posts/awscosts/</link>
