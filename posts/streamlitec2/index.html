@@ -26,6 +26,21 @@
 <p>Streamlit is a free and open source library in Python. It enables me to create relatively high quality dashboards with much less code than what it takes to write a web page with HTML, CSS and Javascript. I have used Dash and Plotly before but in the short time since I have started using Streamlit I have come to view it as the future for making dashboards in Python. I found the visual options available for me in Streamlit actually eclipsed what was available in QuickSight which I view as limited now especially for the price. Streamlit still is nowhere near as powerful or versatile as Power BI and it may never get there due to being free and open source but for my personal use it is more than good enough.</p>
 <h1 id="developing-the-app-here">Developing the App Here</h1>
 <p>On QuickSight you make dashboards whereas on Streamlit you make a web app so I am going to replace my terminology from dashboard to app to reflect that. Another difference is that I can access it anywhere with an internet connection rather than needing to use the AWS Management Console for QuickSight. This I consider to be a quality of life upgrade setting aside the visual changes. My usage of this app from a mobile device has driven how I designed it in terms of what I want to include and exclude. I don&rsquo;t want this app to include too much data because it would become bloated and slow. Instead that sort of extensive exploratory data analysis is best left for home use on the computer. On the other hand I do not want this to be anything close to a real time dashboard because I am getting a drip of sometimes unreliable data using batch ingest on my data lake. Another consideration is near instant data is also available and accessible from the data source itself which in this case is my Apple Watch or iPhone. As it turns out those sources would be better than anything I can come up with because Apple has put some effort in the time series graphs I can view in my Health app or in my daily fitness progression on my Apple Fitness app. My only problem has always been that the data doesn&rsquo;t feel like its my mine when its locked in to those silos. I cannot choose for example what metrics are displayed visually in what increments and across which spans of time.</p>
+<style>
+    .center {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    figure figcaption {
+        text-align: center;
+    }
+</style>
+
+<figure>
+    <img src="/images/metrix.jpeg" alt="Alt text" class="center">
+    <figcaption>Not Like Apple Withholds Your Data</figcaption>
+</figure>
 <p>The type of data that makes the most sense for dashboards is that which can be scanned quickly, can be checked up on throughout the day and may require only mentally light levels of comprehension.</p>
 <style>
     .center {
@@ -40,7 +55,7 @@
 
 <figure>
     <img src="/images/healthapp.png" alt="Alt text" class="center">
-    <figcaption>Dashing</figcaption>
+    <figcaption>Example Dashboard</figcaption>
 </figure>
 <p>With a weekly or monthly cadence I can look for trends that may align with common fitness goals. These can include making sure I am running above a minimum amount of distance every week or that I am consistently being active (judged by my stand hours) during the afternoon over the course of a month. I notice that after doing a morning activity I tend to spend the rest of the day languid thinking that I have somehow earned it even though extended periods of being sedantary is damaging to long term health even for people who are active and healthy. What I have focused on for now in an example app is that I am cycling, running and walking through a variety of locations so I do not lose motivation from the monotony of the same route every time. Another metric is that I am doing a variety of exercise types again trying to stave off lack of motivation from monotony.</p>
 <p>These visuals are accomplished due to the integration Streamlit has with an extensive amount of custom visuals some of which are obscure open source creations made by a small team of one.</p>
@@ -195,8 +210,8 @@
 </style>
 
 <figure>
-    <img src="/images/spotty.png" alt="Alt text" class="center">
-    <figcaption>The Costs May Be Further Lowered With Maximum Prices</figcaption>
+    <img src="/images/t2.png" alt="Alt text" class="center">
+    <figcaption>Cheapest Tier More Than Free</figcaption>
 </figure>
 <p>After deciding on an instance type choosing EC2 spot was a no brainer given that it is cheaper pro rata without requiring a contract or commitment. However this also means I need to be mindful of interruptions. Once an interruption happens the public IP assigned to the instance changes meaning that if I was hoping to access the app from my mobile device it will no longer work. The way to get around this is with an Elastic IP address so that I can rely on the same static address regardless of inevitable interruptions. I was not able to understand or have time to understand the implications of manually setting a maximum price so I ignored it. The cost will end up being cheaper regardless as far as I understand.</p>
 <style>
@@ -211,8 +226,8 @@
 </style>
 
 <figure>
-    <img src="/images/t2.png" alt="Alt text" class="center">
-    <figcaption>Cheapest Tier More Than Free</figcaption>
+    <img src="/images/spotty.png" alt="Alt text" class="center">
+    <figcaption>The Costs May Be Further Lowered With Maximum Prices</figcaption>
 </figure>
 <p>I will not go over the code to deploy my app on EC2 because there are many examples online. I used <code>scp</code> to transfer the local files to the EC2 instance.</p>
 <h1 id="unfortunate-dead-ends">Unfortunate Dead Ends</h1>
