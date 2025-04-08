@@ -36,5 +36,12 @@
       <guid>https://sumant-28.github.io/posts/awsdatalake/</guid>
       <description>&lt;p&gt;In the past I developed a solution to examine the Apple Health &lt;a href=&#34;https://github.com/sumant-28/AppleHealthParser.jl&#34;&gt;data download&lt;/a&gt; exported as an xml file. Upon reflection that only served as a stepping stone to implementing a personal data lake. A serverless application hosted in the cloud allows for much more powerful use of the data with real time insights to drive day to day decision making.&lt;/p&gt;&#xA;&lt;p&gt;I have implemented the following solution in Amazon Web Services (AWS) which will form the basis of this blog post.&lt;/p&gt;</description>
     </item>
+    <item>
+      <title></title>
+      <link>https://sumant-28.github.io/googled341b2d1ca9df3ee/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://sumant-28.github.io/googled341b2d1ca9df3ee/</guid>
+      <description>google-site-verification: googled341b2d1ca9df3ee.html</description>
+    </item>
   </channel>
 </rss>
