@@ -6,8 +6,15 @@
     <description>Recent content on Making the Ordinary Extraordinary With Data Together</description>
     <generator>Hugo</generator>
     <language>en-us</language>
-    <lastBuildDate>Thu, 20 Mar 2025 13:07:57 +1300</lastBuildDate>
+    <lastBuildDate>Sun, 20 Apr 2025 11:25:33 +1200</lastBuildDate>
     <atom:link href="https://sumant-28.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Navigating Complex Structures Nesting With Athena</title>
+      <link>https://sumant-28.github.io/posts/nestedathena/</link>
+      <pubDate>Sun, 20 Apr 2025 11:25:33 +1200</pubDate>
+      <guid>https://sumant-28.github.io/posts/nestedathena/</guid>
+      <description>&lt;p&gt;In this post I am going to deal with something I said I was going to deal with later in an earlier post I made. That topic is how to deal with the workout data that the Health Exporter App (HAE) allows you to export.&lt;/p&gt;&#xA;&lt;p&gt;For a long time I did not think it was possible and that if it was possible it would be very difficult. I was wrong for thinking that it was not possible but I was right in thinking that getting this process set up was much more difficult than what I had done to deal with snapshot records observations.&lt;/p&gt;</description>
+    </item>
     <item>
       <title>Replacing QuickSight With Streamlit Is Like Opening Pandoras Box</title>
       <link>https://sumant-28.github.io/posts/streamlitec2/</link>
