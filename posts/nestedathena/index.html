@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en-us">
-<title>Navigating Complex Structures Nesting With Athena | Making the Ordinary Extraordinary With Data Together</title>
+<title>Navigating Complex Nesting Structures With Athena | Making the Ordinary Extraordinary With Data Together</title>
 <meta charset="utf-8">
 <meta name="generator" content="Hugo 0.136.5">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,7 +17,7 @@
 
 <article>
   <header>
-    <h1>Navigating Complex Structures Nesting With Athena</h1>
+    <h1>Navigating Complex Nesting Structures With Athena</h1>
     <time datetime="2025-04-20T11:25:33&#43;12:00">April 20, 2025</time>
   </header>
   <p>In this post I am going to deal with something I said I was going to deal with later in an earlier post I made. That topic is how to deal with the workout data that the Health Exporter App (HAE) allows you to export.</p>
@@ -154,7 +154,22 @@
 )
 ROW FORMAT serde &#39;org.openx.data.jsonserde.JsonSerDe&#39;
 LOCATION &#39;s3://...&#39;
-</code></pre><p>I did not know until now that it is best to define as permissive a data type as possible for these fields otherwise if a single value in a single field is not within these bounds an error occurs. This is somewhat an advantage to having &ldquo;small&rdquo; big data and not having to worry about advanced cost cutting strategies.</p>
+</code></pre><style>
+    .center {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    figure figcaption {
+        text-align: center;
+    }
+</style>
+
+<figure>
+    <img src="/images/athena.png" alt="Alt text" class="center">
+    <figcaption>Dictionaries Converted To Rows</figcaption>
+</figure>
+<p>I did not know until now that it is best to define as permissive a data type as possible for these fields otherwise if a single value in a single field is not within these bounds an error occurs. This is somewhat an advantage to having &ldquo;small&rdquo; big data and not having to worry about advanced cost cutting strategies.</p>
 <p>In SQL there are some names that are forbidden like <code>end</code> requiring the use of special escape characters. I do not blame the developer for naming the fields as they did because he followed what was natural but for the end user it adds complexity.</p>
 <p>From there you can write a SQL query in the following way particularly when it comes to unnesting arrays of data. When it comes to nested dictionaries it much more intuitive to understand using dot syntax to convert the fields to headers.</p>
 <pre tabindex="0"><code>SELECT 
