@@ -6,8 +6,15 @@
     <description>Recent content in Posts on Making the Ordinary Extraordinary With Data Together</description>
     <generator>Hugo</generator>
     <language>en-us</language>
-    <lastBuildDate>Sun, 20 Apr 2025 11:25:33 +1200</lastBuildDate>
+    <lastBuildDate>Thu, 09 Oct 2025 23:30:01 +1300</lastBuildDate>
     <atom:link href="https://sumant-28.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Updated Health Lake Architecture</title>
+      <link>https://sumant-28.github.io/posts/architecture/</link>
+      <pubDate>Thu, 09 Oct 2025 23:30:01 +1300</pubDate>
+      <guid>https://sumant-28.github.io/posts/architecture/</guid>
+      <description>&lt;h1 id=&#34;where-was-i&#34;&gt;Where Was I?&lt;/h1&gt;&#xA;&lt;p&gt;After a few months away I&amp;rsquo;m back. Hope you didn&amp;rsquo;t miss me. It is hard to tell since I do not have comments enabled but I could look into adding them some time later. By now you know what this blog is about but if not you can read the earlier posts.&lt;/p&gt;&#xA;&lt;h1 id=&#34;architecture&#34;&gt;Architecture&lt;/h1&gt;&#xA;&lt;h2 id=&#34;what-changes-have-i-made-and-why&#34;&gt;What Changes Have I Made and Why&lt;/h2&gt;&#xA;&lt;p&gt;Let&amp;rsquo;s start with how the solution diagram currently looks and what has changed.&lt;/p&gt;</description>
+    </item>
     <item>
       <title>Navigating Complex Nesting Structures With Athena</title>
       <link>https://sumant-28.github.io/posts/nestedathena/</link>
