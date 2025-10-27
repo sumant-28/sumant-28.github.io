@@ -1,16 +1,16 @@
 <!DOCTYPE html>
 <html lang="en-us">
-<title>Updated Health Lake Architecture | Making the Ordinary Extraordinary With Data Together</title>
+<title>Updated Health Lake Architecture | Making the Ordinary Extraordinary With Data</title>
 <meta charset="utf-8">
 <meta name="generator" content="Hugo 0.148.2">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="https://sumant-28.github.io/css/index.css">
 <link rel="canonical" href="https://sumant-28.github.io/posts/architecture/">
-<link rel="alternate" type="application/rss+xml" href="" title="Making the Ordinary Extraordinary With Data Together">
+<link rel="alternate" type="application/rss+xml" href="" title="Making the Ordinary Extraordinary With Data">
 
 <header>
   
-    <a href="https://sumant-28.github.io/" class="title">Making the Ordinary Extraordinary With Data Together</a>
+    <a href="https://sumant-28.github.io/" class="title">Making the Ordinary Extraordinary With Data</a>
   
   
 </header>
@@ -79,7 +79,7 @@
 <p>While writing this post I am still not quite sure of what is best when it comes to architecture on a couple of points because multiple things work but it is hard to guage what is good without feedback from team members or the community. One is whether the initial crawl should be on the backfill data already there in the raw folders. The other is whether the stitch up job I did on bad ETL data should be on transformed data in situ or reprocess the entire raw data layer from scratch one at a time.</p>
 <h1 id="app-talk">App Talk</h1>
 <p>The HAE app is not as reliable as I would like. I have had months where things run flawlessly in the background then when it came to refining for this blog post the POST request uploads becomes intermittent. I have had to figure out on my own that uploads don&rsquo;t seem to happen if you have a VPN running. In addition it is easy to forget that uploads need a stable internet connection which might not be possible depending on your current circumstances.</p>
-<h1 id="ai-coding-help">AI coding help</h1>
+<h1 id="ai-coding-help">AI Coding Help</h1>
 <p>I used ChatGPT and Claude for coding help on all the lambda functions and the streamlit app. People get hung up on how LLMs are inadequate when they write code that does not work. I think the bigger problem is code that passes the LGTM test but silently is a breaking change you only notice later. That takes longer then to debug and dissolves the illusion of productivity gains. If I commit something that causes errors from AI code I want it to fail spectacularly not pass and be inadequate without me even knowing.</p>
 
 </article>
