@@ -6,8 +6,15 @@
     <description>Recent content in Home on Making the Ordinary Extraordinary With Data</description>
     <generator>Hugo</generator>
     <language>en-us</language>
-    <lastBuildDate>Thu, 09 Oct 2025 23:30:01 +1300</lastBuildDate>
+    <lastBuildDate>Mon, 27 Oct 2025 21:17:54 +1300</lastBuildDate>
     <atom:link href="https://sumant-28.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Moving Away From Strava and Apple Walled Gardens</title>
+      <link>https://sumant-28.github.io/posts/dashboarddupes/</link>
+      <pubDate>Mon, 27 Oct 2025 21:17:54 +1300</pubDate>
+      <guid>https://sumant-28.github.io/posts/dashboarddupes/</guid>
+      <description>&lt;p&gt;Hello O&lt;/p&gt;&#xA;&lt;p&gt;&lt;a href=&#34;https://www.google.com&#34; target=&#34;_blank&#34;&gt;Google&lt;/a&gt;&lt;/p&gt;&#xA;&lt;iframe&#xA;    src=&#34;https://stravert-f5u6xfrpvsbdvqcyzlnins.streamlit.app/?embed=true&#34;&#xA;    width=&#34;800&#34;&#xA;    height=&#34;600&#34;&#xA;    frameborder=&#34;0&#34;&#xA;&gt;&lt;/iframe&gt;</description>
+    </item>
     <item>
       <title>Updated Health Lake Architecture</title>
       <link>https://sumant-28.github.io/posts/architecture/</link>
