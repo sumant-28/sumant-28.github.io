@@ -9,11 +9,11 @@
     <lastBuildDate>Mon, 27 Oct 2025 21:17:54 +1300</lastBuildDate>
     <atom:link href="https://sumant-28.github.io/index.xml" rel="self" type="application/rss+xml" />
     <item>
-      <title>Moving Away From Strava and Apple Walled Gardens</title>
+      <title>Breaking Free From Strava and Apple Walled Gardens</title>
       <link>https://sumant-28.github.io/posts/dashboarddupes/</link>
       <pubDate>Mon, 27 Oct 2025 21:17:54 +1300</pubDate>
       <guid>https://sumant-28.github.io/posts/dashboarddupes/</guid>
-      <description>&lt;p&gt;Hello O&lt;/p&gt;&#xA;&lt;p&gt;&lt;a href=&#34;https://www.google.com&#34; target=&#34;_blank&#34;&gt;Google&lt;/a&gt;&lt;/p&gt;&#xA;&lt;iframe&#xA;    src=&#34;https://stravert-f5u6xfrpvsbdvqcyzlnins.streamlit.app/?embed=true&#34;&#xA;    width=&#34;800&#34;&#xA;    height=&#34;600&#34;&#xA;    frameborder=&#34;0&#34;&#xA;&gt;&lt;/iframe&gt;</description>
+      <description>&lt;h1 id=&#34;introduction&#34;&gt;Introduction&lt;/h1&gt;&#xA;&lt;p&gt;Previously in this blog series I established that I now have a data lake over my health data. Now the question to be asked and answered is what should I do with this. I thought why not build a couple of dashboards so I did and in this post I will describe the process of doing so and what purpose it fills. Unlike my earlier posts where I could have been making up nonsense and you just had to take my word for it this dashboard (or at least one of them) is publicly available to view on my web page by anyone now. That makes this post basically a companion piece to my site redesign. I will break down making a Strava clone and an Apple Fitness app clone augmented with a personally useful but somewhat basic feature. In future I will go over doing something like a Garmin clone but that will have to be saved for a future post where I get a handle over how the Garmin or Strava API works. It will most likely be the Garmin API because Strava have been somewhat hostile for developer access to APIs.&lt;/p&gt;</description>
     </item>
     <item>
       <title>Updated Health Lake Architecture</title>
