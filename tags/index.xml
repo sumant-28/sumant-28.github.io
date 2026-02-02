@@ -2,17 +2,17 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Tags on Making the Ordinary Extraordinary With Data</title>
-    <link>https://sumant-28.github.io/tags/</link>
+    <link>https://sumant.info/tags/</link>
     <description>Recent content in Tags on Making the Ordinary Extraordinary With Data</description>
     <generator>Hugo</generator>
     <language>en-us</language>
     <lastBuildDate>Sun, 20 Apr 2025 11:25:33 +1200</lastBuildDate>
-    <atom:link href="https://sumant-28.github.io/tags/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="https://sumant.info/tags/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Aws</title>
-      <link>https://sumant-28.github.io/tags/aws/</link>
+      <link>https://sumant.info/tags/aws/</link>
       <pubDate>Sun, 20 Apr 2025 11:25:33 +1200</pubDate>
-      <guid>https://sumant-28.github.io/tags/aws/</guid>
+      <guid>https://sumant.info/tags/aws/</guid>
       <description></description>
     </item>
   </channel>
