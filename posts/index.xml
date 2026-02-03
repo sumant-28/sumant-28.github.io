@@ -2,59 +2,59 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Posts on Making the Ordinary Extraordinary With Data</title>
-    <link>https://sumant.info/posts/</link>
+    <link>http://localhost:1313/posts/</link>
     <description>Recent content in Posts on Making the Ordinary Extraordinary With Data</description>
     <generator>Hugo</generator>
     <language>en-us</language>
     <lastBuildDate>Mon, 27 Oct 2025 21:17:54 +1300</lastBuildDate>
-    <atom:link href="https://sumant.info/posts/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="http://localhost:1313/posts/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Breaking Free From Strava and Apple Walled Gardens</title>
-      <link>https://sumant.info/posts/dashboarddupes/</link>
+      <link>http://localhost:1313/posts/dashboarddupes/</link>
       <pubDate>Mon, 27 Oct 2025 21:17:54 +1300</pubDate>
-      <guid>https://sumant.info/posts/dashboarddupes/</guid>
+      <guid>http://localhost:1313/posts/dashboarddupes/</guid>
       <description>&lt;h1 id=&#34;introduction&#34;&gt;Introduction&lt;/h1&gt;&#xA;&lt;p&gt;Previously in this blog series I established that I now have a data lake over my health data. Now the question to be asked and answered is what should I do with this. I thought why not build a couple of dashboards so I did and in this post I will describe the process of doing so and what purpose it fills. Unlike my earlier posts where I could have been making up nonsense and you just had to take my word for it this dashboard (or at least one of them) is publicly available to view on my web page by anyone now. That makes this post basically a companion piece to my site redesign. I will break down making a Strava clone and an Apple Fitness app clone augmented with a personally useful but somewhat basic feature. In future I will go over doing something like a Garmin clone but that will have to be saved for a future post where I get a handle over how the Garmin or Strava API works. It will most likely be the Garmin API because Strava have been somewhat hostile for developer access to APIs.&lt;/p&gt;</description>
     </item>
     <item>
       <title>Updated Health Lake Architecture</title>
-      <link>https://sumant.info/posts/architecture/</link>
+      <link>http://localhost:1313/posts/architecture/</link>
       <pubDate>Thu, 09 Oct 2025 23:30:01 +1300</pubDate>
-      <guid>https://sumant.info/posts/architecture/</guid>
+      <guid>http://localhost:1313/posts/architecture/</guid>
       <description>&lt;h1 id=&#34;where-was-i&#34;&gt;Where Was I?&lt;/h1&gt;&#xA;&lt;p&gt;After a few months away I&amp;rsquo;m back. Hope you didn&amp;rsquo;t miss me. It is hard to tell since I do not have comments enabled but I could look into adding them some time later. By now you know what this blog is about but if not you can read the earlier posts.&lt;/p&gt;&#xA;&lt;h1 id=&#34;architecture&#34;&gt;Architecture&lt;/h1&gt;&#xA;&lt;h2 id=&#34;what-changes-have-i-made-and-why&#34;&gt;What Changes Have I Made and Why&lt;/h2&gt;&#xA;&lt;p&gt;Let&amp;rsquo;s start with how the solution diagram currently looks and what has changed.&lt;/p&gt;</description>
     </item>
     <item>
       <title>Navigating Complex Nesting Structures With Athena</title>
-      <link>https://sumant.info/posts/nestedathena/</link>
+      <link>http://localhost:1313/posts/nestedathena/</link>
       <pubDate>Sun, 20 Apr 2025 11:25:33 +1200</pubDate>
-      <guid>https://sumant.info/posts/nestedathena/</guid>
+      <guid>http://localhost:1313/posts/nestedathena/</guid>
       <description>&lt;p&gt;In this post I am going to deal with something I said I was going to deal with later in an earlier post I made. That topic is how to deal with the workout data that the Health Exporter App (HAE) allows you to export.&lt;/p&gt;&#xA;&lt;p&gt;For a long time I did not think it was possible and that if it was possible it would be very difficult. I was wrong for thinking that it was not possible but I was right in thinking that getting this process set up was much more difficult than what I had done to deal with snapshot records observations.&lt;/p&gt;</description>
     </item>
     <item>
       <title>Replacing QuickSight With Streamlit Is Like Opening Pandoras Box</title>
-      <link>https://sumant.info/posts/streamlitec2/</link>
+      <link>http://localhost:1313/posts/streamlitec2/</link>
       <pubDate>Thu, 20 Mar 2025 13:07:57 +1300</pubDate>
-      <guid>https://sumant.info/posts/streamlitec2/</guid>
+      <guid>http://localhost:1313/posts/streamlitec2/</guid>
       <description>&lt;h1 id=&#34;introduction&#34;&gt;Introduction&lt;/h1&gt;&#xA;&lt;p&gt;In my prior blog post I wrote about how I was paying too much for Glue but now I want to draw attention to paying too much for QuickSight. While my Glue bill felt like being shot in the chest QuickSight is like a death by a thousand cuts. On a home project like this I would hope to pay $0 but theres no such thing as a free lunch. Overall I am happy with what I have chosen to implement for now and will discuss later on suggestions for further improvement.&lt;/p&gt;</description>
     </item>
     <item>
       <title>The AWS Bankruptcy Triggering Bill Rite of Passage</title>
-      <link>https://sumant.info/posts/awscosts/</link>
+      <link>http://localhost:1313/posts/awscosts/</link>
       <pubDate>Thu, 20 Feb 2025 23:18:42 +1300</pubDate>
-      <guid>https://sumant.info/posts/awscosts/</guid>
+      <guid>http://localhost:1313/posts/awscosts/</guid>
       <description>&lt;p&gt;This post deals with a common theme in the journey of learning cloud data infrastructure and how it manifested for me while trying to learn AWS.&lt;/p&gt;&#xA;&lt;p&gt;When I saw prior examples of people relaying stories of spiralling costs in AWS it came from spinning instances of EC2 but my story of how it happened involved using the more harmless seeming Glue.&lt;/p&gt;&#xA;&lt;h1 id=&#34;how-it-happened&#34;&gt;How it happened&lt;/h1&gt;&#xA;&lt;p&gt;It started when trying to do an ETL job that was just complicated enough to not be possible with the visual interface. Here I have to confess some of the error was on my part because I named my tables incorrectly in a hurry so I for some reason thought I needed to unnest, convert data types and resolve choice all in the same job while in reality I only needed to do two of those things.&lt;/p&gt;</description>
     </item>
     <item>
       <title>Apple Health Data Lake in AWS – Odds and Ends</title>
-      <link>https://sumant.info/posts/datalakept2/</link>
+      <link>http://localhost:1313/posts/datalakept2/</link>
       <pubDate>Mon, 20 Jan 2025 14:29:11 +1300</pubDate>
-      <guid>https://sumant.info/posts/datalakept2/</guid>
+      <guid>http://localhost:1313/posts/datalakept2/</guid>
       <description>&lt;p&gt;In my previous blog post I described the process of using my Apple Health (AH) records collected over the course of many years and migrating it to a data lake. I omitted some details which I will address here. I may write another post later if I deem it worthwhile.&lt;/p&gt;&#xA;&lt;h1 id=&#34;data-completeness&#34;&gt;Data completeness&lt;/h1&gt;&#xA;&lt;p&gt;The earlier post only dealt with architecture and daily incremental ingest. However by itself it is almost useless to me as an end user. The real power of analytics comes with combining the most recent data with records collected years ago to make meaningful comparisons.&lt;/p&gt;</description>
     </item>
     <item>
       <title>Implementing an Apple Health data lake using AWS</title>
-      <link>https://sumant.info/posts/awsdatalake/</link>
+      <link>http://localhost:1313/posts/awsdatalake/</link>
       <pubDate>Fri, 20 Dec 2024 00:27:50 +1300</pubDate>
-      <guid>https://sumant.info/posts/awsdatalake/</guid>
+      <guid>http://localhost:1313/posts/awsdatalake/</guid>
       <description>&lt;p&gt;In the past I developed a solution to examine the Apple Health &lt;a href=&#34;https://github.com/sumant-28/AppleHealthParser.jl&#34;&gt;data download&lt;/a&gt; exported as an xml file. Upon reflection that only served as a stepping stone to implementing a personal data lake. A serverless application hosted in the cloud allows for much more powerful use of the data with real time insights to drive day to day decision making.&lt;/p&gt;&#xA;&lt;p&gt;I have implemented the following solution in Amazon Web Services (AWS) which will form the basis of this blog post.&lt;/p&gt;</description>
     </item>
   </channel>

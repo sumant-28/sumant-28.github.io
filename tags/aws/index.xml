@@ -2,45 +2,45 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Aws on Making the Ordinary Extraordinary With Data</title>
-    <link>https://sumant.info/tags/aws/</link>
+    <link>http://localhost:1313/tags/aws/</link>
     <description>Recent content in Aws on Making the Ordinary Extraordinary With Data</description>
     <generator>Hugo</generator>
     <language>en-us</language>
     <lastBuildDate>Sun, 20 Apr 2025 11:25:33 +1200</lastBuildDate>
-    <atom:link href="https://sumant.info/tags/aws/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="http://localhost:1313/tags/aws/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Navigating Complex Nesting Structures With Athena</title>
-      <link>https://sumant.info/posts/nestedathena/</link>
+      <link>http://localhost:1313/posts/nestedathena/</link>
       <pubDate>Sun, 20 Apr 2025 11:25:33 +1200</pubDate>
-      <guid>https://sumant.info/posts/nestedathena/</guid>
+      <guid>http://localhost:1313/posts/nestedathena/</guid>
       <description>&lt;p&gt;In this post I am going to deal with something I said I was going to deal with later in an earlier post I made. That topic is how to deal with the workout data that the Health Exporter App (HAE) allows you to export.&lt;/p&gt;&#xA;&lt;p&gt;For a long time I did not think it was possible and that if it was possible it would be very difficult. I was wrong for thinking that it was not possible but I was right in thinking that getting this process set up was much more difficult than what I had done to deal with snapshot records observations.&lt;/p&gt;</description>
     </item>
     <item>
       <title>Replacing QuickSight With Streamlit Is Like Opening Pandoras Box</title>
-      <link>https://sumant.info/posts/streamlitec2/</link>
+      <link>http://localhost:1313/posts/streamlitec2/</link>
       <pubDate>Thu, 20 Mar 2025 13:07:57 +1300</pubDate>
-      <guid>https://sumant.info/posts/streamlitec2/</guid>
+      <guid>http://localhost:1313/posts/streamlitec2/</guid>
       <description>&lt;h1 id=&#34;introduction&#34;&gt;Introduction&lt;/h1&gt;&#xA;&lt;p&gt;In my prior blog post I wrote about how I was paying too much for Glue but now I want to draw attention to paying too much for QuickSight. While my Glue bill felt like being shot in the chest QuickSight is like a death by a thousand cuts. On a home project like this I would hope to pay $0 but theres no such thing as a free lunch. Overall I am happy with what I have chosen to implement for now and will discuss later on suggestions for further improvement.&lt;/p&gt;</description>
     </item>
     <item>
       <title>The AWS Bankruptcy Triggering Bill Rite of Passage</title>
-      <link>https://sumant.info/posts/awscosts/</link>
+      <link>http://localhost:1313/posts/awscosts/</link>
       <pubDate>Thu, 20 Feb 2025 23:18:42 +1300</pubDate>
-      <guid>https://sumant.info/posts/awscosts/</guid>
+      <guid>http://localhost:1313/posts/awscosts/</guid>
       <description>&lt;p&gt;This post deals with a common theme in the journey of learning cloud data infrastructure and how it manifested for me while trying to learn AWS.&lt;/p&gt;&#xA;&lt;p&gt;When I saw prior examples of people relaying stories of spiralling costs in AWS it came from spinning instances of EC2 but my story of how it happened involved using the more harmless seeming Glue.&lt;/p&gt;&#xA;&lt;h1 id=&#34;how-it-happened&#34;&gt;How it happened&lt;/h1&gt;&#xA;&lt;p&gt;It started when trying to do an ETL job that was just complicated enough to not be possible with the visual interface. Here I have to confess some of the error was on my part because I named my tables incorrectly in a hurry so I for some reason thought I needed to unnest, convert data types and resolve choice all in the same job while in reality I only needed to do two of those things.&lt;/p&gt;</description>
     </item>
     <item>
       <title>Apple Health Data Lake in AWS – Odds and Ends</title>
-      <link>https://sumant.info/posts/datalakept2/</link>
+      <link>http://localhost:1313/posts/datalakept2/</link>
       <pubDate>Mon, 20 Jan 2025 14:29:11 +1300</pubDate>
-      <guid>https://sumant.info/posts/datalakept2/</guid>
+      <guid>http://localhost:1313/posts/datalakept2/</guid>
       <description>&lt;p&gt;In my previous blog post I described the process of using my Apple Health (AH) records collected over the course of many years and migrating it to a data lake. I omitted some details which I will address here. I may write another post later if I deem it worthwhile.&lt;/p&gt;&#xA;&lt;h1 id=&#34;data-completeness&#34;&gt;Data completeness&lt;/h1&gt;&#xA;&lt;p&gt;The earlier post only dealt with architecture and daily incremental ingest. However by itself it is almost useless to me as an end user. The real power of analytics comes with combining the most recent data with records collected years ago to make meaningful comparisons.&lt;/p&gt;</description>
     </item>
     <item>
       <title>Implementing an Apple Health data lake using AWS</title>
-      <link>https://sumant.info/posts/awsdatalake/</link>
+      <link>http://localhost:1313/posts/awsdatalake/</link>
       <pubDate>Fri, 20 Dec 2024 00:27:50 +1300</pubDate>
-      <guid>https://sumant.info/posts/awsdatalake/</guid>
+      <guid>http://localhost:1313/posts/awsdatalake/</guid>
       <description>&lt;p&gt;In the past I developed a solution to examine the Apple Health &lt;a href=&#34;https://github.com/sumant-28/AppleHealthParser.jl&#34;&gt;data download&lt;/a&gt; exported as an xml file. Upon reflection that only served as a stepping stone to implementing a personal data lake. A serverless application hosted in the cloud allows for much more powerful use of the data with real time insights to drive day to day decision making.&lt;/p&gt;&#xA;&lt;p&gt;I have implemented the following solution in Amazon Web Services (AWS) which will form the basis of this blog post.&lt;/p&gt;</description>
     </item>
   </channel>
